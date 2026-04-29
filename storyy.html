@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOT SAFE — An Interactive Horror Experience</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Space+Mono:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-darker: #050508;
+            --accent-red: #dc2626;
+            --accent-amber: #f59e0b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-dim: #64748b;
+        }
+        
+        html, body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* ===== SCANLINE & VIGNETTE ===== */
+        .scanlines {
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,0,0,0.03) 2px,
+                rgba(0,0,0,0.03) 4px
+            );
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.5;
+        }
+        
+        .vignette {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.6) 100%);
+            pointer-events: none;
+            z-index: 999;
+        }
+        
+        /* ===== UI LAYER ===== */
+        #ui-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        .danger-meter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.85);
+            border: 1px solid rgba(220,38,38,0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            pointer-events: auto;
+            z-index: 101;
+        }
+        
+        .danger-label {
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+        
+        .danger-bar {
+            width: 120px;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .danger-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #22c55e, #eab308, #dc2626);
+            transition: width 0.5s ease, filter 0.3s;
+        }
+        
+        .day-indicator {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            z-index: 101;
+        }
+        
+        .clue-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            color: var(--text-dim);
+            z-index: 101;
+        }
+        
+        /* ===== SCENE CONTAINER ===== */
+        #stage {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .scene {
+            position: absolute;
+            inset: 0;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 100px 24px 120px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+            overflow-y: auto;
+            overflow-x: hidden;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .scene.active {
+            display: flex;
+            opacity: 1;
+        }
+        
+        /* ===== VISUAL STYLES ===== */
+        .visual-grocery {
+            background: radial-gradient(ellipse at 70% 30%, #1a1a2e 0%, #0f0f1a 50%, #050508 100%);
+        }
+        
+        .visual-street {
+            background: radial-gradient(ellipse at 50% 80%, #1e293b 0%, #0f172a 40%, #020617 100%);
+        }
+        
+        .visual-house {
+            background: radial-gradient(ellipse at 30% 50%, #312e81 0%, #1e1b4b 30%, #0f0f1a 100%);
+        }
+        
+        .visual-darkness {
+            background: #000;
+        }
+        
+        .visual-powercut {
+            background: radial-gradient(ellipse at 50% 50%, #1e1b4b 0%, #000 70%);
+            animation: powerFlicker 4s ease-in-out infinite;
+        }
+        
+        @keyframes powerFlicker {
+            0%, 90%, 100% { opacity: 1; }
+            91% { opacity: 0.3; }
+            92% { opacity: 1; }
+            93% { opacity: 0.2; }
+            94% { opacity: 1; }
+        }
+        
+        .visual-discovery {
+            background: radial-gradient(ellipse at 60% 40%, #7c2d12 0%, #450a0a 30%, #000 100%);
+        }
+        
+        .visual-ending-dark {
+            background: radial-gradient(ellipse at 50% 50%, #000 0%, #0a0a0f 100%);
+        }
+        
+        .visual-ending-escape {
+            background: radial-gradient(ellipse at 50% 30%, #1e3a5f 0%, #0f172a 60%, #000 100%);
+        }
+        
+        .visual-ending-survivor {
+            background: radial-gradient(ellipse at 50% 50%, #064e3b 0%, #022c22 50%, #000 100%);
+        }
+        
+        /* ===== SCENE CONTENT ===== */
+        .scene-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 800px;
+            min-height: 100%;
+            padding: 20px 0;
+        }
+        
+        .scene-location {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 16px;
+            flex-shrink: 0;
+        }
+        
+        .scene-icon {
+            font-size: clamp(48px, 8vw, 64px);
+            margin-bottom: 20px;
+            opacity: 0.8;
+            filter: drop-shadow(0 0 20px rgba(255,255,255,0.1));
+            flex-shrink: 0;
+        }
+        
+        .scene-title {
+            font-size: clamp(24px, 4vw, 40px);
+            font-weight: 800;
+            line-height: 1.2;
+            max-width: 600px;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+            flex-shrink: 0;
+        }
+        
+        .scene-description {
+            font-size: clamp(14px, 2vw, 17px);
+            line-height: 1.7;
+            max-width: 540px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            flex-shrink: 0;
+        }
+        
+        .scene-clue {
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            color: var(--accent-amber);
+            margin: 16px 0;
+            padding: 12px 20px;
+            background: rgba(245,158,11,0.1);
+            border: 1px solid rgba(245,158,11,0.2);
+            border-radius: 6px;
+            display: none;
+            max-width: 500px;
+            width: 100%;
+            flex-shrink: 0;
+        }
+        
+        .scene-clue.visible {
+            display: block;
+        }
+        
+        /* ===== CHOICE BUTTONS ===== */
+        .choices {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 500px;
+            margin-top: 8px;
+            flex-shrink: 0;
+        }
+        
+        .choice-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px;
+            padding: 18px 24px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+        
+        .choice-btn:hover {
+            background: rgba(255,255,255,0.15);
+            border-color: rgba(255,255,255,0.4);
+            transform: translateX(6px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .choice-btn::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--accent-red);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .choice-btn:hover::before {
+            opacity: 1;
+        }
+        
+        .choice-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            display: block;
+            margin-bottom: 6px;
+        }
+        
+        .choice-text {
+            font-weight: 500;
+            line-height: 1.5;
+        }
+        
+        /* ===== ENDING SCREENS ===== */
+        .ending-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 700px;
+            min-height: 100%;
+            padding: 40px 20px;
+        }
+        
+        .ending-type {
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            padding: 10px 24px;
+            border-radius: 20px;
+            margin-bottom: 24px;
+            display: inline-block;
+        }
+        
+        .type-dark {
+            background: rgba(220,38,38,0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(220,38,38,0.3);
+        }
+        
+        .type-escape {
+            background: rgba(59,130,246,0.2);
+            color: #93c5fd;
+            border: 1px solid rgba(59,130,246,0.3);
+        }
+        
+        .type-survivor {
+            background: rgba(34,197,94,0.2);
+            color: #86efac;
+            border: 1px solid rgba(34,197,94,0.3);
+        }
+        
+        .ending-title {
+            font-size: clamp(28px, 5vw, 48px);
+            font-weight: 800;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+        
+        .ending-desc {
+            font-size: 16px;
+            line-height: 1.8;
+            max-width: 560px;
+            margin-bottom: 24px;
+            color: var(--text-secondary);
+        }
+        
+        .ending-twist {
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            color: var(--accent-amber);
+            padding: 16px 24px;
+            background: rgba(245,158,11,0.1);
+            border-left: 3px solid var(--accent-amber);
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 24px;
+            max-width: 500px;
+            width: 100%;
+            text-align: left;
+            line-height: 1.6;
+        }
+        
+        .ending-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 12px;
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+        
+        .btn-restart {
+            background: var(--text-primary);
+            color: var(--bg-dark);
+            border: none;
+            padding: 16px 40px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+        
+        .btn-restart:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255,255,255,0.2);
+        }
+        
+        /* ===== START SCREEN ===== */
+        #start-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-darker);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: opacity 1s;
+            padding: 20px;
+        }
+        
+        #start-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .start-title {
+            font-size: clamp(48px, 10vw, 100px);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+        
+        .start-subtitle {
+            font-size: 14px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        
+        .start-warning {
+            max-width: 420px;
+            text-align: center;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid rgba(220,38,38,0.2);
+            border-radius: 8px;
+            background: rgba(220,38,38,0.05);
+        }
+        
+        .btn-start {
+            background: var(--text-primary);
+            color: var(--bg-dark);
+            border: none;
+            padding: 18px 48px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-start:hover {
+            transform: scale(1.05);
+            box-shadow: 0 20px 40px rgba(255,255,255,0.15);
+        }
+        
+        /* ===== TEXT MESSAGE ===== */
+        .text-message {
+            background: rgba(0,0,0,0.6);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 16px 0;
+            max-width: 320px;
+            width: 100%;
+            text-align: left;
+            border: 1px solid rgba(255,255,255,0.1);
+            flex-shrink: 0;
+        }
+        
+        .text-sender {
+            font-size: 12px;
+            color: var(--accent-amber);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        
+        .text-content {
+            font-size: 14px;
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+        
+        .text-time {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 8px;
+            text-align: right;
+        }
+        
+        /* ===== DISCOVERY ITEMS ===== */
+        .discovery-grid {
+            display: flex;
+            gap: 16px;
+            margin: 16px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .discovery-item {
+            width: 70px;
+            height: 70px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            opacity: 0.3;
+            transition: all 0.5s;
+        }
+        
+        .discovery-item.found {
+            opacity: 1;
+            border-color: var(--accent-amber);
+            background: rgba(245,158,11,0.1);
+        }
+        
+        /* ===== FLASHLIGHT EFFECT ===== */
+        .flashlight {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, transparent 120px, rgba(0,0,0,0.95) 250px);
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        
+        .flashlight.active {
+            opacity: 1;
+        }
+        
+        /* ===== HEARTBEAT ===== */
+        .heartbeat {
+            animation: heartbeat 2s ease-in-out infinite;
+        }
+        
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            10% { transform: scale(1.03); }
+            20% { transform: scale(1); }
+            30% { transform: scale(1.03); }
+            40% { transform: scale(1); }
+        }
+        
+        /* ===== RESPONSIVE FIXES ===== */
+        @media (max-width: 768px) {
+            .scene {
+                padding: 80px 16px 100px;
+                justify-content: flex-start;
+            }
+            
+            .scene-content {
+                padding: 10px 0;
+            }
+            
+            .danger-meter {
+                top: 10px;
+                right: 10px;
+                padding: 8px 12px;
+                font-size: 10px;
+            }
+            
+            .danger-bar {
+                width: 80px;
+            }
+            
+            .day-indicator {
+                top: 10px;
+                left: 10px;
+                font-size: 10px;
+            }
+            
+            .choice-btn {
+                padding: 16px 20px;
+                font-size: 14px;
+            }
+            
+            .ending-stats {
+                gap: 2rem;
+                padding: 16px;
+            }
+            
+            .stat-value {
+                font-size: 20px;
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            .scene {
+                padding: 120px 40px 140px;
+            }
+            
+            .choices {
+                max-width: 550px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+    <div class="flashlight" id="flashlight"></div>
+    
+    <!-- UI Layer -->
+    <div id="ui-layer">
+        <div class="day-indicator" id="day-indicator">DAY 1 — "HE NOTICED HER"</div>
+        
+        <div class="danger-meter">
+            <div class="danger-label">Threat Level</div>
+            <div class="danger-bar">
+                <div class="danger-fill" id="danger-fill" style="width: 15%"></div>
+            </div>
+        </div>
+        
+        <div class="clue-counter" id="clue-counter">Clues: 0/5</div>
+    </div>
+    
+    <!-- Start Screen -->
+    <div id="start-screen">
+        <h1 class="start-title">NOT SAFE</h1>
+        <p class="start-subtitle">An Interactive Horror Experience</p>
+        <div class="start-warning">
+            <strong style="color: var(--accent-red); display: block; margin-bottom: 8px;">⚠ CONTENT WARNING</strong>
+            This experience contains realistic depictions of stalking, home invasion, and psychological terror. No supernatural elements. Based on real patterns of predatory behavior.
+        </div>
+        <button class="btn-start" onclick="startExperience()">Enter the House</button>
+    </div>
+    
+    <!-- Stage -->
+    <div id="stage">
+        
+        <!-- ==================== DAY 1 ==================== -->
+        
+        <!-- Scene 1: Grocery Store -->
+        <div class="scene visual-grocery" id="d1s1">
+            <div class="scene-content">
+                <div class="scene-location">Grocery Store — 6:47 PM</div>
+                <div class="scene-icon">🛒</div>
+                <h2 class="scene-title">The man in aisle 3 hasn't moved in 4 minutes.</h2>
+                <p class="scene-description">
+                    You're buying instant noodles for dinner. He's buying nothing. 
+                    Every time you move to a new aisle, you hear footsteps behind you. 
+                    Plastic bags rustle. The CCTV camera above flickers.
+                </p>
+                <div class="choices">
+                    <button class="choice-btn" onclick="makeChoice('d1s1', 'ignore')">
+                        <span class="choice-label">Option A</span>
+                        <span class="choice-text">Ignore him. You're being paranoid. Just finish shopping.</span>
+                    </button>
+                    <button class="choice-btn" onclick="makeChoice('d1s1', 'observe')">
+                        <span class="choice-label">Option B</span>
+                        <span class="choice-text">Observe silently. Memorize his features. Stay aware.</span>
+                    </button>
+                    <button class="choice-btn" onclick="makeChoice('d1s1', 'confront')">
+                        <span class="choice-label">Option C</span>
+                        <span class="choice-text">Confront him. Ask if he needs help finding something.</span>
+                    </button>
+                </div>
+                <div class="scene-clue" id="clue-d1s1">🔍 CLUE: Man wears work boots with dried mud. Local construction site?</div>
+            </div>
+        </div>
+        
+        <!-- Scene 2: Walking Home -->
+        <div class="scene visual-street" id="d1s2">
+            <div class="scene-content">
+                <div class="scene-location">Oak Street — 7:12 PM</div>
+                <div class="scene-icon">🚶</div>
+                <h2 class="scene-title">The footsteps sync with yours.</h2>
+                <p class="scene-description">
+                    Three blocks to home. The streetlight ahead flickers—has been broken for weeks. 
+                    You clutch your phone. 20% battery. Behind you, the rhythm matches: your step, 
+                    their step. Your pause, their pause.
+                </p>
+                <div class="choices">
+                    <button class="choice-btn" onclick="makeChoice('d1s2', 'walk')">
+                        <span class="choice-label">Option A</span>
+                        <span class="choice-text">Walk faster. Don't look back. Get inside.</span>
+                    </button>
+                    <button class="choice-btn" onclick="makeChoice('d1s2', 'duck')">
+                        <span class="choice-label">Option B</span>
+                        <span class="choice-text">Duck into the 24-hour laundromat. Wait him out.</span>
+                    </button>
+                    <button class="choice-btn" onclick="makeChoice('d1s2', 'call')">
+                        <span class="choice-label">Option C</span>
+                        <span class="choice-text">Call your mom. Talk loudly. Let him hear you're not alone.</span>
+                    </button>
+                </div>
+                <div class="scene-clue" id="clue-d1s2">🔍 CLUE: He stops at the corner. Watches you enter. Doesn't follow.</div>
+            </div>
+        </div>
+        
+        <!-- Scene 3: First Power Cut -->
+        <div class="scene visual-powercut" id="d1s3">
+            <div class="scene-content">
+                <div class="scene-location">Living Room — 9:33 PM</div>
+                <div class="scene-icon heartbeat">💡</div>
+                <h2 class="scene-title">Click. Then silence.</h2>
+                <p class="scene-description">
+                    The TV dies mid-sentence. The refrigerator stops humming. 
+                    Outside, the streetlight you just passed under goes dark too. 
+                    Not just your house. The whole block. But you hear something 
+                    metallic. From the backyard.
+                </p>
+                <div class="choices">
+                    <button class="choice-btn" onclick="makeChoice('d1s3', 'switch')">
+                        <span class="choice-label">Option A</span>
+                        <span class="choice-text">Check the main breaker. It's probably just a trip.</span>
+                    </button>
+                    <button class="choice-btn" onclick="makeChoice('d1s3', 'still')">
+                        <span class="choice-label">Option B</span>
+                        <span class="choice-text">Stay perfectly still. Listen. Wait for your eyes to adjust.</span>
+                    </button>
+                    <button class="choice-btn" onclick="makeChoice('d1s3', 'help')">
+                        <span class="choice-label">Option C</span>
+                        <span class="choice-text">Text the neighbor: "Did your power go out too?"</span>
+                    </button>
+                </div>
+                <div class="scene-clue" id="clue-d1s3">🔍 CLUE: The breaker is fine. Power returns after 90 seconds. Too precise.</div>
+            </div>
+        </div>
+        
+        <!-- Scene 4: Night Text -->
+        <div class="scene visual-house" id="d1s4">
+            <div class="scene-content">
+                <div class="scene-location">Bedroom — 11:47 PM</div>
+                <div class="scene-icon">📱</div>
+                <h2 class="scene-title">You can't sleep. The house is too loud.</h2>
+                <p class="scene-description">
+                    Every creak is footsteps. Every shadow is movement. 
+                    You've checked the locks three times. The third lock—the deadbolt—
+                    feels sticky. Has it always been hard to turn?
+                </p>
+                <div class="text-message">
+                    <div class="text-sender">To: Mom</div>
+                    <div class="text-content" id="text-content">"I feel uncomfortable being alone. Someone was watching me at the store. I think he followed me home."</div>
+                    <div class="text-time">Read 11:48 PM</div>
+                </div>
+                <div class="choices">
+                    <button class="choice-btn" onclick="makeChoice('d1s4', 'send')">
+                        <span class="choice-label">Option A</span>
+                        <span class="choice-text">Send it. You need to tell someone.</span>
+                    </button>
+                    <button class="choice-btn" onclick="makeChoice('d1s4', 'delete')">
+                        <span class="choice-label">Option B</span>
+                        <span class="choice-text">Delete it. She's at a funeral. Don't worry her. You're fine.</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== DAY 2 ==================== -->
+        
+        <!-- Scene 5: Morning Unease -->
+        <div class="scene visual-house" id="d2s1">
+            <div class="scene-content">
+                <div class="scene-location">Kitchen — 7:15 AM</div>
+                <div class="scene-icon">☕</div>
+                <h2 class="scene-title">Something is different.</h2>
+                <p class="scene-description">
+                    You didn't sleep. At 5 AM you finally dozed, sitting upright on the couch. 
+                    Now: the cereal box you left closed is open. The milk—still cold—
+                    has been moved to the wrong shelf. Your house key, usually on the hook, 
+                    is on the counter. You don't remember moving it.
+                </p>
+                <div class="discovery-grid">
+                    <div class="discovery-item" id="disc-cereal">🥣</div>
+                    <div class="discovery-item" id="disc-milk">🥛</div>
+                    <div class="discovery-item" id="disc-key">🔑</div>
+                </div>
+                <div class="choices">
+                    <button class="choice-btn" onclick="makeChoice('d2s1', 'rational')">
+                        <span class="choice-label">Option A</span>
+                        <span class="choice-text">You're exhausted. You probably did these things and forgot.</span>
+                    </button>
+                    <button class="choice-btn" onclick="makeChoice('d2s1', 'check')">
+                        <span class="choice-label">Option B</span>
+                        <span class="choice-text">Check every room. Every closet. Under the bed. Now.</span>
+                    </button>
+                </div>
+                <div class="scene-clue" id="clue-d2s1">🔍 CLUE: The back door's inner latch—usually locked—is unhooked.</div>
+            </div>
+        </div>
+        
+        <!-- Scene 6: Power Cut Again -->
+        <div class="scene visual-powercut" id="d2s2">
+            <div class="scene-content">
+                <div class="scene-location">Hallway — 2:45 PM</div>
+                <div class="scene-icon">⚡</div>
+                <h2 class="scene-title">It happens again. But stronger.</h2>
+                <p class="scene-description">
+                    Lights don't just cut—they surge first. Brighter, then dark. 
+                    The buzz is louder. Lasts longer. Your phone: 8%. 
+                    You need to check the meter. You need to see if it's just you this time.
+                </p>
+                <div class="choices">
+                    <button class="choice-btn" onclick="makeChoice('d2s2', 'outside')">
+                        <span class="choice-label">Option A</span>
+                        <span class="choice-text">Go outside. Check the meter yourself. Be quick.</span>
+                    </button>
+                    <button class="choice-btn" onclick="makeChoice('d2s2', 'neighbor')">
+                        <span class="choice-label">Option B</span>
+                        <span class="choice-text">Knock on Mrs. Chen's door. Ask if her power is out.</span>
+                    </button>
+                    <button class="choice-btn" onclick="makeChoice('d2s2', 'inside')">
+                        <span class="choice-label">Option C</span>
+                        <span class="choice-text">Stay inside. Lock the door. Wait in the dark.</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Scene 7: The Meter (Conditional) -->
+        <div class="scene visual-street" id="d2s3">
+            <div class="scene-content">
+                <div class="scene-location">Side of House — 2:48 PM</div>
+                <div class="scene-icon">🔧</div>
+                <h2 class="scene-title">The meter box is open.</h2>
+                <p class="scene-description">
+                    You didn't open it. The metal cover hangs loose. Inside: 
+                    wires pulled, connections exposed. This wasn't a power surge. 
+                    This was manual. Behind you, a footstep crushes gravel.
+                </p>
+                <div class="choices">
+                    <button class="choice-btn" onclick="makeChoice('d2s3', 'run')">
+                        <span class="choice-label">Option A</span>
+                        <span class="choice-text">Run inside. Don't look. Lock everything.</span>
+                    </button>
+                    <button class="choice-btn" onclick="makeChoice('d2s3', 'face')">
+                        <span class="choice-label">Option B</span>
+                        <span class="choice-text">Turn around. See who it is. End this now.</span>
+                    </button>
+                </div>
+                <div class="scene-clue" id="clue-d2s3">🔍 CLUE: Work boots. Same dried mud. He's been here before.</div>
+            </div>
+        </div>
+        
+        <!-- Scene 8: Inside Fear -->
+        <div class="scene visual-darkness" id="d2s4">
+            <div class="scene-content">
+                <div class="scene-location">Downstairs — 8:20 PM</div>
+                <div class="scene-icon">👂</div>
+                <h2 class="scene-title">There is someone upstairs.</h2>
+                <p class="scene-description">
+                    You've been sitting in silence for an hour. Then: a floorboard. 
+                    Weight shifting. Someone standing in your bedroom. Above your head. 
+                    The refrigerator downstairs is slightly open. Dripping.
+                </p>
+                <div class="choices">
+                    <button class="choice-btn" onclick="makeChoice('d2s4', 'upstairs')">
+                        <span class="choice-label">Option A</span>
+                        <span class="choice-text">Go upstairs. Confront them. It's your house.</span>
+                    </button>
+                    <button class="choice-btn" onclick="makeChoice('d2s4', 'downstairs')">
+                        <span class="choice-label">Option B</span>
+                        <span class="choice-text">Stay downstairs. Quiet. Find a weapon. Call 911.</span>
+                    </button>
+                    <button class="choice-btn" onclick="makeChoice('d2s4', 'flee')">
+                        <span class="choice-label">Option C</span>
+                        <span class="choice-text">Run outside. Barefoot. Don't stop. Find anyone.</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Scene 9: The Call -->
+        <div class="scene visual-house" id="d2s5">
+            <div class="scene-content">
+                <div class="scene-location">Bathroom — 9:03 PM</div>
+                <div class="scene-icon">📞</div>
+                <h2 class="scene-title">"Mom, I think someone's in the house."</h2>
+                <p class="scene-description">
+                    You're whispering in the bathroom. Door locked. 
+                    The phone crackles with distance—she's 400 miles away at grandma's funeral.
+                    "Honey, are you sure? Check the—"
+                </p>
+                <div class="text-message" style="background: rgba(220,38,38,0.1); border-color: rgba(220,38,38,0.3);">
+                    <div class="text-sender">Call Disconnected</div>
+                    <div class="text-content" style="color: #fca5a5;">Signal lost. 9:03 PM. Battery: 3%.</div>
+                    <div class="text-time">Last location: Home</div>
+                </div>
+                <div class="choices">
+                    <button class="choice-btn" onclick="makeChoice('d2s5', 'callback')">
+                        <span class="choice-label">Option A</span>
+                        <span class="choice-text">Try to call back. Redial. Again. Again.</span>
+                    </button>
+                    <button class="choice-btn" onclick="makeChoice('d2s5', 'charge')">
+                        <span class="choice-label">Option B</span>
+                        <span class="choice-text">Find a charger. Upstairs. Where he is.</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== DAY 3 ==================== -->
+        
+        <!-- Scene 10: False Normal -->
+        <div class="scene visual-house" id="d3s1">
+            <div class="scene-content">
+                <div class="scene-location">Morning — 8:00 AM</div>
+                <div class="scene-icon">🌅</div>
+                <h2 class="scene-title">Sunlight. Silence. Safety?</h2>
+                <p class="scene-description">
+                    You wake on the bathroom floor. Neck stiff. Phone dead. 
+                    But morning is here. The house is quiet. Birds outside. 
+                    Maybe you imagined it all. Sleep deprivation. Anxiety. 
+                    You open the refrigerator to make breakfast.
+                </p>
+                <div class="choices">
+                    <button class="choice-btn" onclick="makeChoice('d3s1', 'relax')">
+                        <span class="choice-label">Option A</span>
+                        <span class="choice-text">Relax. Make coffee. It was just fear. You're safe now.</span>
+                    </button>
+                    <button class="choice-btn" onclick="makeChoice('d3s1', 'inspect')">
+                        <span class="choice-label">Option B</span>
+                        <span class="choice-text">Inspect the house. Top to bottom. While it's light.</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Scene 11: The Discovery -->
+        <div class="scene visual-discovery" id="d3s2">
+            <div class="scene-content">
+                <div class="scene-location">Storage Closet — 10:15 AM</div>
+                <div class="scene-icon">🕳️</div>
+                <h2 class="scene-title">The vent cover is loose.</h2>
+                <p class="scene-description">
+                    You pull it open. Inside: food wrappers. Energy drink cans. 
+                    A folded blanket. A phone charger. Someone has been living 
+                    in your walls. While you slept. While you showered. 
+                    For how long? Days? The realization hits: he was here 
+                    during the power cuts. Hiding. Listening.
+                </p>
+                <div class="discovery-grid">
+                    <div class="discovery-item found">🍫</div>
+                    <div class="discovery-item found">⚡</div>
+                    <div class="discovery-item found">🛏️</div>
+                    <div class="discovery-item found">📱</div>
+                </div>
+                <div class="choices">
+                    <button class="choice-btn" onclick="makeChoice('d3s2', 'photo')">
+                        <span class="choice-label">Option A</span>
+                        <span class="choice-text">Take photos. Evidence. Then run. Now.</span>
+                    </button>
+                    <button class="choice-btn" onclick="makeChoice('d3s2', 'quiet')">
+                        <span class="choice-label">Option B</span>
+                        <span class="choice-text">Back away quietly. Don't alert him. Find an exit.</span>
+                    </button>
+                </div>
+                <div class="scene-clue" id="clue-d3s2">🔍 CRITICAL: The charger matches your phone. He's been using your electricity.</div>
+            </div>
+        </div>
+        
+        <!-- Scene 12: Realization -->
+        <div class="scene visual-darkness" id="d3s3">
+            <div class="scene-content">
+                <div class="scene-location">The House — 10:16 AM</div>
+                <div class="scene-icon">👁️</div>
+                <h2 class="scene-title">He knows you know.</h2>
+                <p class="scene-description">
+                    The floorboard creaks. Not upstairs. Downstairs. 
+                    He's been behind you the whole time. The grocery store. 
+                    The street. The power cuts—distractions while he entered. 
+                    The locks you checked? He watched you check them. 
+                    He knows your routine better than you do.
+                </p>
+                <div class="choices">
+                    <button class="choice-btn" onclick="makeChoice('d3s3', 'run')">
+                        <span class="choice-label" style="color: var(--accent-red);">FINAL CHOICE A</span>
+                        <span class="choice-text">Run. Front door. Don't look back.</span>
+                    </button>
+                    <button class="choice-btn" onclick="makeChoice('d3s3', 'hide')">
+                        <span class="choice-label" style="color: var(--accent-amber);">FINAL CHOICE B</span>
+                        <span class="choice-text">Hide. Small spaces. He can't reach everywhere.</span>
+                    </button>
+                    <button class="choice-btn" onclick="makeChoice('d3s3', 'fight')">
+                        <span class="choice-label" style="color: #fff;">FINAL CHOICE C</span>
+                        <span class="choice-text">Fight. Kitchen knife. Surprise him first.</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== ENDINGS ==================== -->
+        
+        <!-- Ending 1: The Dark -->
+        <div class="scene visual-ending-dark" id="end-dark">
+            <div class="ending-container">
+                <div class="ending-type type-dark">ENDING: THE DARK</div>
+                <h2 class="ending-title">You didn't make it outside.</h2>
+                <p class="ending-desc">
+                    The front door was closer than you remembered. Or he was faster. 
+                    The hallway light—still broken from Day 1—flickered once. 
+                    Then his hand. Then the dark.
+                </p>
+                <div class="ending-twist">
+                    <strong>THE TRUTH:</strong> He had been inside for 11 days. The "vacation" 
+                    your parents took? He sent that text from your mom's phone. 
+                    They've been searching for you since Tuesday.
+                </div>
+                <div class="ending-stats">
+                    <div class="stat">
+                        <div class="stat-value" style="color: #dc2626;">0%</div>
+                        <div class="stat-label">Survival Chance</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" style="color: #dc2626;">11</div>
+                        <div class="stat-label">Days Undetected</div>
+                    </div>
+                </div>
+                <button class="btn-restart" onclick="restart()">↺ Try Again</button>
+            </div>
+        </div>
+        
+        <!-- Ending 2: The Escape -->
+        <div class="scene visual-ending-escape" id="end-escape">
+            <div class="ending-container">
+                <div class="ending-type type-escape">ENDING: THE ESCAPE</div>
+                <h2 class="ending-title">You reached the street.</h2>
+                <p class="ending-desc">
+                    Mrs. Chen saw you running barefoot. She didn't ask questions. 
+                    Her door locked behind you. Police arrived in 8 minutes. 
+                    They found the nest in the walls. The food. The charger. 
+                    But they didn't find him.
+                </p>
+                <div class="ending-twist">
+                    <strong>THE TRUTH:</strong> He escaped through the same vent you discovered. 
+                    Police found work boots at a construction site two blocks away. 
+                    Dried mud. Same boots. He's still in the neighborhood. 
+                    He knows your name now. He knows you got away.
+                </div>
+                <div class="ending-stats">
+                    <div class="stat">
+                        <div class="stat-value" style="color: #3b82f6;">100%</div>
+                        <div class="stat-label">Immediate Survival</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" style="color: #f59e0b;">UNKNOWN</div>
+                        <div class="stat-label">Long-term Safety</div>
+                    </div>
+                </div>
+                <button class="btn-restart" onclick="restart()">↺ Try Again</button>
+            </div>
+        </div>
+        
+        <!-- Ending 3: The Survivor -->
+        <div class="scene visual-ending-survivor" id="end-survivor">
+            <div class="ending-container">
+                <div class="ending-type type-survivor">ENDING: THE SURVIVOR</div>
+                <h2 class="ending-title">You have evidence.</h2>
+                <p class="ending-desc">
+                    The photos uploaded to cloud before he reached you. 
+                    Your scream—recorded by the phone you left charging—
+                    triggered the neighbor's smart doorbell. Three angles. 
+                    His face. His entry. His nest. He's in custody by noon.
+                </p>
+                <div class="ending-twist">
+                    <strong>THE TRUTH:</strong> Police found a second nest. Under the house. 
+                    Different food. Different blanket. He wasn't alone. 
+                    The other one watched the arrest from a parked car. 
+                    They never found the second. He never talked. 
+                    But he smiled when they showed him your photo.
+                </div>
+                <div class="ending-stats">
+                    <div class="stat">
+                        <div class="stat-value" style="color: #22c55e;">SECURED</div>
+                        <div class="stat-label">Evidence</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" style="color: #f59e0b;">1 OF 2</div>
+                        <div class="stat-label">Intruders Caught</div>
+                    </div>
+                </div>
+                <button class="btn-restart" onclick="restart()">↺ Try Again</button>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        // Game State
+        const state = {
+            day: 1,
+            danger: 15,
+            clues: 0,
+            choices: {},
+            ending: null
+        };
+        
+        const DANGER_LEVELS = {
+            LOW: 30,
+            MEDIUM: 60,
+            HIGH: 85
+        };
+        
+        function startExperience() {
+            document.getElementById('start-screen').classList.add('hidden');
+            showScene('d1s1');
+            updateUI();
+        }
+        
+        function showScene(sceneId) {
+            document.querySelectorAll('.scene').forEach(s => {
+                s.classList.remove('active');
+            });
+            
+            const target = document.getElementById(sceneId);
+            if (target) {
+                target.classList.add('active');
+                target.scrollTop = 0;
+            }
+            
+            updateDayIndicator(sceneId);
+            applyVisualEffects(sceneId);
+        }
+        
+        function updateDayIndicator(sceneId) {
+            const indicator = document.getElementById('day-indicator');
+            if (sceneId.startsWith('d1')) {
+                indicator.textContent = 'DAY 1 — "HE NOTICED HER"';
+            } else if (sceneId.startsWith('d2')) {
+                indicator.textContent = 'DAY 2 — "HE KNOWS HER ROUTINE"';
+            } else if (sceneId.startsWith('d3')) {
+                indicator.textContent = 'DAY 3 — "HE WAS ALREADY INSIDE"';
+            } else if (sceneId.startsWith('end-')) {
+                indicator.textContent = 'STORY COMPLETE';
+            }
+        }
+        
+        function applyVisualEffects(sceneId) {
+            const flashlight = document.getElementById('flashlight');
+            
+            if (sceneId.includes('powercut') || sceneId === 'd2s4') {
+                flashlight.classList.add('active');
+            } else {
+                flashlight.classList.remove('active');
+            }
+        }
+        
+        function makeChoice(sceneId, choice) {
+            state.choices[sceneId] = choice;
+            
+            const effects = calculateEffects(sceneId, choice);
+            
+            state.danger = Math.max(0, Math.min(100, state.danger + effects.danger));
+            
+            if (effects.clue) {
+                state.clues++;
+                const clueEl = document.getElementById(`clue-${sceneId}`);
+                if (clueEl) clueEl.classList.add('visible');
+            }
+            
+            if (effects.discover) {
+                effects.discover.forEach(item => {
+                    const el = document.getElementById(`disc-${item}`);
+                    if (el) el.classList.add('found');
+                });
+            }
+            
+            updateUI();
+            
+            const nextScene = getNextScene(sceneId, choice);
+            
+            setTimeout(() => {
+                if (nextScene.startsWith('end-')) {
+                    showEnding(nextScene);
+                } else {
+                    showScene(nextScene);
+                }
+            }, effects.delay || 500);
+        }
+        
+        function calculateEffects(sceneId, choice) {
+            const effects = { danger: 0, clue: false, delay: 500 };
+            
+            if (sceneId === 'd1s1') {
+                if (choice === 'ignore') effects.danger = 10;
+                if (choice === 'observe') { effects.danger = 5; effects.clue = true; }
+                if (choice === 'confront') effects.danger = 15;
+            }
+            
+            if (sceneId === 'd1s2') {
+                if (choice === 'walk') effects.danger = 10;
+                if (choice === 'duck') { effects.danger = 5; effects.clue = true; }
+                if (choice === 'call') effects.danger = 8;
+            }
+            
+            if (sceneId === 'd1s3') {
+                if (choice === 'switch') effects.danger = 15;
+                if (choice === 'still') { effects.danger = 5; effects.clue = true; }
+                if (choice === 'help') effects.danger = 8;
+            }
+            
+            if (sceneId === 'd1s4') {
+                if (choice === 'send') effects.danger = 5;
+                if (choice === 'delete') effects.danger = 12;
+            }
+            
+            if (sceneId === 'd2s1') {
+                effects.discover = ['cereal', 'milk', 'key'];
+                if (choice === 'rational') effects.danger = 15;
+                if (choice === 'check') { effects.danger = 10; effects.clue = true; }
+            }
+            
+            if (sceneId === 'd2s2') {
+                if (choice === 'outside') effects.danger = 20;
+                if (choice === 'neighbor') effects.danger = 10;
+                if (choice === 'inside') effects.danger = 12;
+            }
+            
+            if (sceneId === 'd2s3') {
+                effects.clue = true;
+                if (choice === 'run') effects.danger = 15;
+                if (choice === 'face') effects.danger = 25;
+            }
+            
+            if (sceneId === 'd2s4') {
+                if (choice === 'upstairs') effects.danger = 30;
+                if (choice === 'downstairs') effects.danger = 15;
+                if (choice === 'flee') effects.danger = 10;
+            }
+            
+            if (sceneId === 'd2s5') {
+                if (choice === 'callback') effects.danger = 15;
+                if (choice === 'charge') effects.danger = 25;
+            }
+            
+            if (sceneId === 'd3s1') {
+                if (choice === 'relax') effects.danger = 20;
+                if (choice === 'inspect') effects.danger = 10;
+            }
+            
+            if (sceneId === 'd3s2') {
+                effects.clue = true;
+                if (choice === 'photo') { effects.danger = 15; state.ending = 'survivor'; }
+                if (choice === 'quiet') { effects.danger = 10; }
+            }
+            
+            if (sceneId === 'd3s3') {
+                effects.delay = 800;
+                if (choice === 'run') {
+                    if (state.danger > 70) state.ending = 'dark';
+                    else state.ending = 'escape';
+                }
+                if (choice === 'hide') {
+                    if (state.clues >= 3) state.ending = 'survivor';
+                    else state.ending = 'dark';
+                }
+                if (choice === 'fight') {
+                    if (state.danger > 60) state.ending = 'dark';
+                    else state.ending = 'escape';
+                }
+            }
+            
+            return effects;
+        }
+        
+        function getNextScene(current, choice) {
+            const flow = {
+                'd1s1': 'd1s2',
+                'd1s2': 'd1s3',
+                'd1s3': 'd1s4',
+                'd1s4': 'd2s1',
+                'd2s1': 'd2s2',
+                'd2s2': choice === 'outside' ? 'd2s3' : 'd2s4',
+                'd2s3': 'd2s4',
+                'd2s4': 'd2s5',
+                'd2s5': 'd3s1',
+                'd3s1': 'd3s2',
+                'd3s2': 'd3s3',
+                'd3s3': `end-${state.ending || 'dark'}`
+            };
+            
+            return flow[current] || 'end-dark';
+        }
+        
+        function showEnding(endingId) {
+            showScene(endingId);
+        }
+        
+        function updateUI() {
+            const bar = document.getElementById('danger-fill');
+            bar.style.width = state.danger + '%';
+            
+            if (state.danger < DANGER_LEVELS.LOW) {
+                bar.style.filter = 'hue-rotate(0deg)';
+            } else if (state.danger < DANGER_LEVELS.MEDIUM) {
+                bar.style.filter = 'hue-rotate(60deg)';
+            } else if (state.danger < DANGER_LEVELS.HIGH) {
+                bar.style.filter = 'hue-rotate(120deg)';
+            } else {
+                bar.style.filter = 'hue-rotate(180deg) brightness(1.2)';
+            }
+            
+            document.getElementById('clue-counter').textContent = `Clues: ${state.clues}/5`;
+        }
+        
+        function restart() {
+            state.day = 1;
+            state.danger = 15;
+            state.clues = 0;
+            state.choices = {};
+            state.ending = null;
+            
+            document.querySelectorAll('.scene-clue').forEach(el => el.classList.remove('visible'));
+            document.querySelectorAll('.discovery-item').forEach(el => el.classList.remove('found'));
+            
+            document.getElementById('start-screen').classList.remove('hidden');
+            updateUI();
+        }
+        
+        updateUI();
+    </script>
+</body>
+</html>

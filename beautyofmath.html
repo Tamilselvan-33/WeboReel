@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linear Algebra — See The Math</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@300;400;600&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #111118;
+  --surface2: #1a1a26;
+  --border: rgba(255,255,255,0.08);
+  --accent: #00ffaa;
+  --accent2: #ff6b6b;
+  --accent3: #6b8fff;
+  --accent4: #ffd166;
+  --text: #e8e8f0;
+  --text-dim: #7a7a9a;
+  --grid-color: rgba(255,255,255,0.06);
+  --grid-axis: rgba(255,255,255,0.18);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Figtree', sans-serif;
+  font-weight: 400;
+  overflow-x: hidden;
+}
+
+/* NAV */
+nav {
+  position: fixed; top:0; left:0; right:0; z-index:100;
+  padding: 16px 48px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(10,10,15,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.3rem;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+}
+.nav-logo span { color: var(--text-dim); font-style: italic; font-size: 0.9rem; }
+.nav-links {
+  display: flex; gap: 8px;
+}
+.nav-links a {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.nav-links a:hover {
+  color: var(--accent);
+  border-color: rgba(0,255,170,0.25);
+  background: rgba(0,255,170,0.05);
+}
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 120px 24px 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 60%, rgba(0,255,170,0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 20% 20%, rgba(107,143,255,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 80% 80%, rgba(255,107,107,0.04) 0%, transparent 60%);
+}
+
+.hero-grid {
+  position: absolute; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 0%, transparent 80%);
+}
+
+.hero-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 4px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  position: relative; z-index: 1;
+}
+
+.hero h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(2.8rem, 7vw, 5.5rem);
+  line-height: 1.05;
+  font-weight: 400;
+  margin-bottom: 28px;
+  position: relative; z-index: 1;
+}
+.hero h1 em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.hero-sub {
+  font-size: 1.05rem;
+  color: var(--text-dim);
+  max-width: 560px;
+  line-height: 1.7;
+  margin-bottom: 48px;
+  position: relative; z-index: 1;
+}
+
+.hero-cta {
+  display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+  position: relative; z-index: 1;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #000;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  text-decoration: none;
+  padding: 14px 32px;
+  border-radius: 4px;
+  font-weight: 600;
+  transition: all 0.2s;
+  border: none; cursor: pointer;
+}
+.btn-primary:hover { box-shadow: 0 0 30px rgba(0,255,170,0.4); transform: translateY(-1px); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  text-decoration: none;
+  padding: 14px 32px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  transition: all 0.2s; cursor: pointer;
+}
+.btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
+
+/* SECTIONS */
+section {
+  padding: 100px 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 4px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.section-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 400;
+  margin-bottom: 16px;
+  line-height: 1.15;
+}
+
+.section-desc {
+  color: var(--text-dim);
+  font-size: 1rem;
+  line-height: 1.75;
+  max-width: 600px;
+  margin-bottom: 48px;
+}
+
+/* INSIGHT BOX */
+.insight {
+  background: linear-gradient(135deg, rgba(0,255,170,0.06), rgba(0,255,170,0.02));
+  border: 1px solid rgba(0,255,170,0.2);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-top: 24px;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: #b8f0da;
+}
+.insight strong {
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+}
+
+/* CANVAS CARD */
+.viz-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+
+.viz-header {
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+
+.viz-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text);
+  letter-spacing: 1px;
+}
+
+.viz-controls {
+  display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+}
+
+.ctrl-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+
+.matrix-input {
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.matrix-input input {
+  width: 44px; height: 32px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.matrix-input input:focus { border-color: var(--accent); }
+
+.viz-body {
+  padding: 0;
+  position: relative;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+}
+
+.preset-btns {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+
+.preset-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.preset-btn:hover, .preset-btn.active {
+  border-color: rgba(0,255,170,0.4);
+  color: var(--accent);
+  background: rgba(0,255,170,0.06);
+}
+
+/* ANIMATE BUTTON */
+.anim-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: 1px solid rgba(0,255,170,0.35);
+  background: rgba(0,255,170,0.08);
+  color: var(--accent);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.anim-btn:hover { background: rgba(0,255,170,0.16); }
+
+/* DET VALUE DISPLAY */
+.det-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.8rem;
+  font-weight: 600;
+  padding: 12px 0 4px;
+}
+
+.det-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+/* COLUMNS LAYOUT */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 32px;
+}
+@media(max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+/* EIGEN LEGEND */
+.legend {
+  display: flex; gap: 20px; flex-wrap: wrap;
+  padding: 16px 28px;
+  border-top: 1px solid var(--border);
+}
+.legend-item {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--text-dim);
+}
+.legend-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+}
+
+/* STEP EXPLAINER */
+.steps {
+  display: flex; flex-direction: column; gap: 16px;
+  margin-top: 32px;
+}
+.step {
+  display: flex; gap: 20px; align-items: flex-start;
+  padding: 20px 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.3s;
+}
+.step:hover { border-color: rgba(0,255,170,0.2); }
+.step-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2rem;
+  color: rgba(0,255,170,0.3);
+  line-height: 1;
+  flex-shrink: 0;
+  width: 40px;
+}
+.step-text h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.step-text p {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+.step-text code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--accent4);
+  background: rgba(255,209,102,0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* FOOTER */
+footer {
+  text-align: center;
+  padding: 60px 24px;
+  border-top: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+}
+
+/* SECTION DIVIDER */
+.divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border), transparent);
+  margin: 0 48px;
+}
+
+/* SLIDER */
+input[type=range].custom-slider {
+  -webkit-appearance: none;
+  height: 3px;
+  background: linear-gradient(to right, var(--accent), var(--accent3));
+  border-radius: 3px;
+  outline: none;
+  width: 120px;
+}
+input[type=range].custom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px rgba(0,255,170,0.5);
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">See The Math <span>— Linear Algebra</span></div>
+  <div class="nav-links">
+    <a href="#transforms">Transform</a>
+    <a href="#determinant">Determinant</a>
+    <a href="#matmul">Matrix Mult</a>
+    <a href="#eigen">Eigenvectors</a>
+    <a href="#inverse">Inverse</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-eyebrow">Visual Linear Algebra</div>
+  <h1>Stop calculating.<br>Start <em>seeing</em>.</h1>
+  <p class="hero-sub">
+    Every matrix is a transformation of space. Every determinant is an area. Every eigenvector tells a story. This is what your textbook was trying to show you.
+  </p>
+  <div class="hero-cta">
+    <a href="#transforms" class="btn-primary">START EXPLORING</a>
+    <a href="#determinant" class="btn-ghost">SKIP TO DETERMINANT</a>
+  </div>
+</div>
+
+<!-- ===== SECTION 1: LINEAR TRANSFORMATIONS ===== -->
+<div class="divider"></div>
+<section id="transforms">
+  <span class="section-label">01 — The Big Idea</span>
+  <h2 class="section-title">A Matrix <em>transforms</em> space</h2>
+  <p class="section-desc">
+    When you multiply a matrix by a vector, you're not just doing arithmetic — you're <strong>moving every point in 2D space</strong> to a new location. The grid stretches, rotates, shears. Watch it happen.
+  </p>
+
+  <div class="viz-card">
+    <div class="viz-header">
+      <div class="viz-title">GRID TRANSFORMER</div>
+      <div class="viz-controls">
+        <span class="ctrl-label">Matrix A =</span>
+        <div class="matrix-input" id="transform-matrix">
+          <input type="number" id="t00" value="1" step="0.1">
+          <input type="number" id="t01" value="0" step="0.1">
+          <input type="number" id="t10" value="0" step="0.1">
+          <input type="number" id="t11" value="1" step="0.1">
+        </div>
+        <button class="anim-btn" id="transform-animate-btn">▶ ANIMATE</button>
+      </div>
+    </div>
+    <div class="viz-body">
+      <canvas id="transform-canvas" height="420"></canvas>
+    </div>
+    <div style="padding:16px 28px; border-top:1px solid var(--border);">
+      <div class="preset-btns" id="transform-presets">
+        <button class="preset-btn active" data-m="1,0,0,1">Identity</button>
+        <button class="preset-btn" data-m="2,0,0,2">Scale ×2</button>
+        <button class="preset-btn" data-m="0.707,-0.707,0.707,0.707">Rotate 45°</button>
+        <button class="preset-btn" data-m="1,1,0,1">Shear X</button>
+        <button class="preset-btn" data-m="-1,0,0,1">Flip X</button>
+        <button class="preset-btn" data-m="1,0,0,-1">Flip Y</button>
+        <button class="preset-btn" data-m="0,-1,1,0">Rotate 90°</button>
+        <button class="preset-btn" data-m="2,1,0.5,1.5">Custom</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight">
+    <strong>💡 KEY INSIGHT —</strong> The two columns of any matrix tell you exactly where the basis vectors <strong>î</strong> (1,0) and <strong>ĵ</strong> (0,1) land after the transformation. Everything else follows automatically. The red arrow is where î goes. The green arrow is where ĵ goes.
+  </div>
+
+  <div class="steps" style="margin-top:40px;">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        <h4>Start with standard grid</h4>
+        <p>The grid shows all of 2D space. Each square is 1×1. The basis vectors are <code>î = (1,0)</code> and <code>ĵ = (0,1)</code>.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        <h4>Matrix columns = where basis vectors land</h4>
+        <p>Column 1 of the matrix tells you where <code>î</code> goes. Column 2 tells you where <code>ĵ</code> goes. That's it. That's the whole matrix.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        <h4>Everything else follows</h4>
+        <p>Every other point moves linearly based on those two destinations. Parallel lines stay parallel. The origin stays fixed. Grid lines stay straight.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 2: DETERMINANT ===== -->
+<div class="divider"></div>
+<section id="determinant">
+  <span class="section-label">02 — Area & Orientation</span>
+  <h2 class="section-title">The Determinant is <em>area</em></h2>
+  <p class="section-desc">
+    The determinant answers: <em>"How much does this transformation scale area?"</em> A det of 2 means areas double. A det of 0 means everything collapses to a line. A negative det means space flips.
+  </p>
+
+  <div class="viz-card">
+    <div class="viz-header">
+      <div class="viz-title">AREA VISUALIZER</div>
+      <div class="viz-controls">
+        <span class="ctrl-label">Matrix =</span>
+        <div class="matrix-input">
+          <input type="number" id="d00" value="2" step="0.1">
+          <input type="number" id="d01" value="1" step="0.1">
+          <input type="number" id="d10" value="0" step="0.1">
+          <input type="number" id="d11" value="2" step="0.1">
+        </div>
+        <div>
+          <div class="det-label">det(A)</div>
+          <div class="det-display" id="det-value" style="color:var(--accent)">4.00</div>
+        </div>
+      </div>
+    </div>
+    <div class="viz-body">
+      <canvas id="det-canvas" height="380"></canvas>
+    </div>
+    <div style="padding:16px 28px; border-top:1px solid var(--border);">
+      <div class="preset-btns">
+        <button class="preset-btn active" onclick="setDetPreset(2,1,0,2)">Scale</button>
+        <button class="preset-btn" onclick="setDetPreset(1,0,0,1)">Identity (det=1)</button>
+        <button class="preset-btn" onclick="setDetPreset(1,2,0.5,1)">Shear (det=0)</button>
+        <button class="preset-btn" onclick="setDetPreset(-1,0,0,1)">Flip (det=-1)</button>
+        <button class="preset-btn" onclick="setDetPreset(0,0,0,0)">Collapse (det=0)</button>
+        <button class="preset-btn" onclick="setDetPreset(3,1,1,2)">Big det</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight">
+    <strong>💡 KEY INSIGHT —</strong> The unit square (area = 1) gets transformed. The blue shaded region shows the NEW area of that square. <code>det = new area / original area</code>. Negative det = space flipped like a page turning over.
+  </div>
+
+  <div class="two-col" style="margin-top:40px;">
+    <div class="step">
+      <div class="step-num" style="color:rgba(0,255,170,0.4)">+</div>
+      <div class="step-text">
+        <h4>Positive determinant</h4>
+        <p>Space is <strong>stretched</strong>. Orientation preserved — what was clockwise stays clockwise. <code>det > 1</code> = expand. <code>0 &lt; det &lt; 1</code> = compress.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num" style="color:rgba(255,107,107,0.5)">−</div>
+      <div class="step-text">
+        <h4>Negative determinant</h4>
+        <p>Space <strong>flips</strong>. Like turning a piece of paper over. Orientation reverses — clockwise becomes counter-clockwise.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num" style="color:rgba(255,255,255,0.2)">0</div>
+      <div class="step-text">
+        <h4>Zero determinant</h4>
+        <p>Space <strong>collapses</strong> — the entire 2D plane squishes into a line (or a point). You lose a dimension. The matrix has no inverse.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num" style="color:rgba(107,143,255,0.5)">ad−bc</div>
+      <div class="step-text">
+        <h4>The formula, finally</h4>
+        <p>For matrix <code>[[a,b],[c,d]]</code>, det = <code>ad − bc</code>. Now you know WHY — it's the area of the parallelogram formed by the two column vectors.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 3: MATRIX MULTIPLICATION ===== -->
+<div class="divider"></div>
+<section id="matmul">
+  <span class="section-label">03 — Composition</span>
+  <h2 class="section-title">Matrix Multiplication = <em>doing transforms one after another</em></h2>
+  <p class="section-desc">
+    AB doesn't mean "multiply numbers together." It means: <strong>first apply B, then apply A.</strong> You're composing two transformations into one. Watch the grid go through two steps.
+  </p>
+
+  <div class="viz-card">
+    <div class="viz-header">
+      <div class="viz-title">COMPOSITION VIEWER — B first, then A</div>
+    </div>
+    <div class="viz-body">
+      <canvas id="matmul-canvas" height="400"></canvas>
+    </div>
+    <div style="padding:20px 28px; border-top:1px solid var(--border); display:flex; gap:32px; flex-wrap:wrap; align-items:flex-start;">
+      <div>
+        <div class="ctrl-label" style="margin-bottom:8px;">Matrix B (apply first)</div>
+        <div class="matrix-input">
+          <input type="number" id="b00" value="1" step="0.1">
+          <input type="number" id="b01" value="1" step="0.1">
+          <input type="number" id="b10" value="0" step="0.1">
+          <input type="number" id="b11" value="1" step="0.1">
+        </div>
+      </div>
+      <div>
+        <div class="ctrl-label" style="margin-bottom:8px;">Matrix A (apply second)</div>
+        <div class="matrix-input">
+          <input type="number" id="a00" value="0" step="0.1">
+          <input type="number" id="a01" value="-1" step="0.1">
+          <input type="number" id="a10" value="1" step="0.1">
+          <input type="number" id="a11" value="0" step="0.1">
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="ctrl-label">Result AB</div>
+        <div id="matmul-result" style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:var(--accent4);line-height:1.8;"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-left:auto;">
+        <button class="anim-btn" id="matmul-step-btn">STEP 1: Apply B</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight">
+    <strong>💡 KEY INSIGHT —</strong> The order matters! AB ≠ BA in general. Think of it: "rotate then shear" gives a different result than "shear then rotate." Matrix multiplication is reading <strong>right to left</strong> — the rightmost matrix acts first.
+  </div>
+</section>
+
+<!-- ===== SECTION 4: EIGENVECTORS ===== -->
+<div class="divider"></div>
+<section id="eigen">
+  <span class="section-label">04 — The Special Directions</span>
+  <h2 class="section-title">Eigenvectors don't <em>rotate</em> — they only scale</h2>
+  <p class="section-desc">
+    Most vectors get knocked to a completely different direction when transformed. Eigenvectors are special — they stay on their own line. They just get stretched or squished by a number called the eigenvalue.
+  </p>
+
+  <div class="viz-card">
+    <div class="viz-header">
+      <div class="viz-title">EIGENVECTOR FINDER</div>
+      <div class="viz-controls">
+        <span class="ctrl-label">Matrix =</span>
+        <div class="matrix-input">
+          <input type="number" id="e00" value="3" step="0.1">
+          <input type="number" id="e01" value="1" step="0.1">
+          <input type="number" id="e10" value="0" step="0.1">
+          <input type="number" id="e11" value="2" step="0.1">
+        </div>
+        <button class="anim-btn" id="eigen-animate-btn">▶ TRANSFORM</button>
+      </div>
+    </div>
+    <div class="viz-body">
+      <canvas id="eigen-canvas" height="400"></canvas>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Eigenvector 1 (stays on line)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent4)"></div>Eigenvector 2 (stays on line)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div>Random vector (gets rotated off)</div>
+    </div>
+    <div style="padding:16px 28px; border-top:1px solid var(--border);">
+      <div class="preset-btns">
+        <button class="preset-btn active" onclick="setEigenPreset(3,1,0,2)">Diagonal-ish</button>
+        <button class="preset-btn" onclick="setEigenPreset(2,0,0,3)">Pure Scale</button>
+        <button class="preset-btn" onclick="setEigenPreset(1,1,0,1)">Shear</button>
+        <button class="preset-btn" onclick="setEigenPreset(4,1,2,3)">Complex</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight">
+    <strong>💡 KEY INSIGHT —</strong> Av = λv. The eigenvector <strong>v</strong> only gets multiplied by a scalar λ (eigenvalue). λ &gt; 1 = stretched. 0 &lt; λ &lt; 1 = compressed. λ &lt; 0 = flipped. This is why eigenvectors are the "natural axes" of a transformation.
+  </div>
+</section>
+
+<!-- ===== SECTION 5: INVERSE ===== -->
+<div class="divider"></div>
+<section id="inverse">
+  <span class="section-label">05 — Undoing Transformations</span>
+  <h2 class="section-title">The Inverse <em>undoes</em> everything</h2>
+  <p class="section-desc">
+    If a matrix transforms space one way, its inverse transforms it back. Apply A then A⁻¹ and you're back to where you started. But if det = 0, there's no way back — you can't un-squish a dimension.
+  </p>
+
+  <div class="viz-card">
+    <div class="viz-header">
+      <div class="viz-title">TRANSFORM & UNDO</div>
+      <div class="viz-controls">
+        <span class="ctrl-label">Matrix A =</span>
+        <div class="matrix-input">
+          <input type="number" id="i00" value="2" step="0.1">
+          <input type="number" id="i01" value="1" step="0.1">
+          <input type="number" id="i10" value="1" step="0.1">
+          <input type="number" id="i11" value="2" step="0.1">
+        </div>
+        <div id="inv-display" style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text-dim);"></div>
+      </div>
+    </div>
+    <div class="viz-body">
+      <canvas id="inverse-canvas" height="380"></canvas>
+    </div>
+    <div style="padding:16px 28px; border-top:1px solid var(--border); display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+      <button class="anim-btn" id="inv-step-btn">STEP 1: Apply A</button>
+      <div class="preset-btns">
+        <button class="preset-btn active" onclick="setInvPreset(2,1,1,2)">Invertible</button>
+        <button class="preset-btn" onclick="setInvPreset(1,2,0.5,1)">No Inverse!</button>
+        <button class="preset-btn" onclick="setInvPreset(3,0,0,2)">Scale</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight">
+    <strong>💡 KEY INSIGHT —</strong> A⁻¹ exists only if <code>det(A) ≠ 0</code>. When det = 0, the transformation collapses space into fewer dimensions — there's no way to recover the original information. This is why singular matrices (det = 0) have no inverse.
+  </div>
+</section>
+
+<footer>
+  BUILT WITH ♥ FOR LINEAR ALGEBRA STUDENTS — SEE THE MATH, NOT JUST THE NUMBERS
+</footer>
+
+<script>
+// ============================================================
+// UTILITY
+// ============================================================
+function getM(ids) {
+  return ids.map(id => parseFloat(document.getElementById(id).value) || 0);
+}
+
+function matMul(A, B) {
+  // A and B are [a,b,c,d] = [[a,b],[c,d]]
+  return [
+    A[0]*B[0] + A[1]*B[2],
+    A[0]*B[1] + A[1]*B[3],
+    A[2]*B[0] + A[3]*B[2],
+    A[2]*B[1] + A[3]*B[3]
+  ];
+}
+
+function det(m) { return m[0]*m[3] - m[1]*m[2]; }
+
+function applyM(m, x, y) {
+  return [m[0]*x + m[1]*y, m[2]*x + m[3]*y];
+}
+
+function lerpM(m, t) {
+  const id = [1,0,0,1];
+  return [
+    id[0] + (m[0]-id[0])*t,
+    id[1] + (m[1]-id[1])*t,
+    id[2] + (m[2]-id[2])*t,
+    id[3] + (m[3]-id[3])*t
+  ];
+}
+
+function lerp(a, b, t) { return a + (b-a)*t; }
+
+function easeInOut(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+// ============================================================
+// GRID DRAWING HELPER
+// ============================================================
+function drawGrid(ctx, W, H, m, t = 1, alpha = 1) {
+  const CX = W/2, CY = H/2;
+  const S = Math.min(W, H) / 10;
+  const mt = lerpM(m, t);
+
+  function toScreen(x, y) {
+    const [tx, ty] = applyM(mt, x, y);
+    return [CX + tx*S, CY - ty*S];
+  }
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  // Grid lines
+  for (let i = -8; i <= 8; i++) {
+    ctx.beginPath();
+    const [x1,y1] = toScreen(i, -8);
+    const [x2,y2] = toScreen(i,  8);
+    ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+    ctx.strokeStyle = i===0 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.07)';
+    ctx.lineWidth = i===0 ? 1.5 : 0.8;
+    ctx.stroke();
+
+    ctx.beginPath();
+    const [x3,y3] = toScreen(-8, i);
+    const [x4,y4] = toScreen( 8, i);
+    ctx.moveTo(x3,y3); ctx.lineTo(x4,y4);
+    ctx.strokeStyle = i===0 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.07)';
+    ctx.lineWidth = i===0 ? 1.5 : 0.8;
+    ctx.stroke();
+  }
+
+  // Origin dot
+  const [ox, oy] = toScreen(0,0);
+  ctx.beginPath(); ctx.arc(ox,oy,3,0,Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fill();
+
+  ctx.restore();
+  return toScreen;
+}
+
+function drawBasisVectors(ctx, toScreen, col1, col2) {
+  // î vector
+  drawArrow(ctx, toScreen(0,0), toScreen(col1[0], col1[1]), '#ff6b6b', 2.5, 'î');
+  // ĵ vector
+  drawArrow(ctx, toScreen(0,0), toScreen(col2[0], col2[1]), '#00ffaa', 2.5, 'ĵ');
+}
+
+function drawArrow(ctx, from, to, color, width=2, label='') {
+  const dx = to[0]-from[0], dy = to[1]-from[1];
+  const len = Math.sqrt(dx*dx+dy*dy);
+  if (len < 1) return;
+  const ang = Math.atan2(dy, dx);
+  const hw = 8, hl = 14;
+
+  ctx.save();
+  ctx.strokeStyle = color; ctx.fillStyle = color;
+  ctx.lineWidth = width;
+  ctx.lineCap = 'round';
+
+  ctx.beginPath();
+  ctx.moveTo(from[0], from[1]);
+  ctx.lineTo(to[0] - Math.cos(ang)*hl*0.5, to[1] - Math.sin(ang)*hl*0.5);
+  ctx.stroke();
+
+  // Arrowhead
+  ctx.beginPath();
+  ctx.translate(to[0], to[1]);
+  ctx.rotate(ang);
+  ctx.moveTo(0,0);
+  ctx.lineTo(-hl, -hw/2);
+  ctx.lineTo(-hl, hw/2);
+  ctx.closePath();
+  ctx.fill();
+
+  if (label) {
+    ctx.rotate(-ang);
+    ctx.font = "bold 12px 'JetBrains Mono'";
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.fillText(label, 0, -10);
+  }
+
+  ctx.restore();
+}
+
+// ============================================================
+// SECTION 1: LINEAR TRANSFORM
+// ============================================================
+const tCanvas = document.getElementById('transform-canvas');
+const tCtx = tCanvas.getContext('2d');
+let tAnimProgress = 1;
+let tAnimating = false;
+let tAnimId = null;
+let tCurrentM = [1,0,0,1];
+
+function resizeCanvas(c) {
+  c.width = c.offsetWidth;
+}
+
+function drawTransform(m, t = 1) {
+  resizeCanvas(tCanvas);
+  const W = tCanvas.width, H = tCanvas.height;
+  tCtx.clearRect(0,0,W,H);
+
+  // Background
+  tCtx.fillStyle = '#0d0d18';
+  tCtx.fillRect(0,0,W,H);
+
+  // Draw original grid faintly
+  drawGrid(tCtx, W, H, [1,0,0,1], 1, 0.15);
+
+  // Draw transformed grid
+  const toScreen = drawGrid(tCtx, W, H, m, t, 1);
+
+  // Basis vectors
+  const mt = lerpM(m, t);
+  drawBasisVectors(tCtx, toScreen, [mt[0], mt[2]], [mt[1], mt[3]]);
+
+  // Label
+  tCtx.font = "11px 'JetBrains Mono'";
+  tCtx.fillStyle = 'rgba(255,255,255,0.3)';
+  tCtx.fillText(`[[${m[0].toFixed(1)}, ${m[1].toFixed(1)}], [${m[2].toFixed(1)}, ${m[3].toFixed(1)}]]`, 16, H-16);
+}
+
+function animateTransform(targetM) {
+  if (tAnimId) cancelAnimationFrame(tAnimId);
+  tAnimProgress = 0;
+  const duration = 1200;
+  const start = performance.now();
+
+  function step(now) {
+    const raw = Math.min((now - start) / duration, 1);
+    tAnimProgress = easeInOut(raw);
+    drawTransform(targetM, tAnimProgress);
+    if (raw < 1) tAnimId = requestAnimationFrame(step);
+    else { tAnimating = false; tCurrentM = targetM; }
+  }
+
+  tAnimating = true;
+  tAnimId = requestAnimationFrame(step);
+}
+
+function getTransformM() {
+  return getM(['t00','t01','t10','t11']);
+}
+
+document.getElementById('transform-animate-btn').addEventListener('click', () => {
+  animateTransform(getTransformM());
+});
+
+['t00','t01','t10','t11'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    drawTransform(getTransformM(), 1);
+  });
+});
+
+// Presets
+document.getElementById('transform-presets').querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#transform-presets .preset-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const vals = btn.dataset.m.split(',').map(Number);
+    ['t00','t01','t10','t11'].forEach((id,i) => document.getElementById(id).value = vals[i]);
+    animateTransform(vals);
+  });
+});
+
+drawTransform([1,0,0,1], 1);
+
+// ============================================================
+// SECTION 2: DETERMINANT
+// ============================================================
+const dCanvas = document.getElementById('det-canvas');
+const dCtx = dCanvas.getContext('2d');
+
+function drawDet() {
+  resizeCanvas(dCanvas);
+  const W = dCanvas.width, H = dCanvas.height;
+  dCtx.clearRect(0,0,W,H);
+  dCtx.fillStyle = '#0d0d18';
+  dCtx.fillRect(0,0,W,H);
+
+  const m = getM(['d00','d01','d10','d11']);
+  const d = det(m);
+
+  document.getElementById('det-value').textContent = d.toFixed(2);
+  document.getElementById('det-value').style.color =
+    Math.abs(d) < 0.01 ? '#888' : d > 0 ? 'var(--accent)' : 'var(--accent2)';
+
+  const S = Math.min(W, H) / 10;
+  const CX = W/2, CY = H/2;
+
+  function toScreen(x, y) { return [CX + x*S, CY - y*S]; }
+  function toScreenT(x, y) {
+    const [tx, ty] = applyM(m, x, y);
+    return [CX + tx*S, CY - ty*S];
+  }
+
+  // Light original grid
+  for (let i = -7; i <= 7; i++) {
+    dCtx.beginPath();
+    dCtx.moveTo(...toScreen(i,-7)); dCtx.lineTo(...toScreen(i,7));
+    dCtx.strokeStyle = i===0?'rgba(255,255,255,0.22)':'rgba(255,255,255,0.05)';
+    dCtx.lineWidth = i===0?1.5:0.7; dCtx.stroke();
+    dCtx.beginPath();
+    dCtx.moveTo(...toScreen(-7,i)); dCtx.lineTo(...toScreen(7,i));
+    dCtx.strokeStyle = i===0?'rgba(255,255,255,0.22)':'rgba(255,255,255,0.05)';
+    dCtx.lineWidth = i===0?1.5:0.7; dCtx.stroke();
+  }
+
+  // Original unit square (faint)
+  dCtx.beginPath();
+  dCtx.moveTo(...toScreen(0,0));
+  dCtx.lineTo(...toScreen(1,0));
+  dCtx.lineTo(...toScreen(1,1));
+  dCtx.lineTo(...toScreen(0,1));
+  dCtx.closePath();
+  dCtx.strokeStyle = 'rgba(255,255,255,0.25)';
+  dCtx.lineWidth = 1.5;
+  dCtx.setLineDash([4,4]);
+  dCtx.stroke();
+  dCtx.setLineDash([]);
+  dCtx.fillStyle = 'rgba(255,255,255,0.04)';
+  dCtx.fill();
+
+  // Transformed parallelogram
+  const corners = [[0,0],[1,0],[1,1],[0,1]];
+  dCtx.beginPath();
+  dCtx.moveTo(...toScreenT(0,0));
+  dCtx.lineTo(...toScreenT(1,0));
+  dCtx.lineTo(...toScreenT(1,1));
+  dCtx.lineTo(...toScreenT(0,1));
+  dCtx.closePath();
+
+  const color = d >= 0 ? '0,255,170' : '255,107,107';
+  dCtx.fillStyle = `rgba(${color},0.15)`;
+  dCtx.fill();
+  dCtx.strokeStyle = `rgba(${color},0.9)`;
+  dCtx.lineWidth = 2;
+  dCtx.stroke();
+
+  // Basis vectors after transform
+  drawArrow(dCtx, toScreen(0,0), toScreenT(1,0), '#ff6b6b', 2.5, 'î\'');
+  drawArrow(dCtx, toScreen(0,0), toScreenT(0,1), '#00ffaa', 2.5, 'ĵ\'');
+
+  // Area label
+  dCtx.font = "bold 13px 'JetBrains Mono'";
+  dCtx.fillStyle = `rgba(${color},0.9)`;
+  dCtx.textAlign = 'center';
+  const [mx2, my2] = toScreenT(0.5, 0.5);
+  if (Math.abs(d) > 0.05) dCtx.fillText(`Area = |${d.toFixed(2)}|`, mx2, my2);
+
+  // Formula label
+  dCtx.font = "11px 'JetBrains Mono'";
+  dCtx.fillStyle = 'rgba(255,255,255,0.3)';
+  dCtx.textAlign = 'left';
+  dCtx.fillText(`det = ad−bc = ${m[0]}×${m[3]}−${m[1]}×${m[2]} = ${d.toFixed(2)}`, 16, H-16);
+}
+
+function setDetPreset(a,b,c,d) {
+  document.getElementById('d00').value=a;
+  document.getElementById('d01').value=b;
+  document.getElementById('d10').value=c;
+  document.getElementById('d11').value=d;
+  drawDet();
+}
+
+['d00','d01','d10','d11'].forEach(id => {
+  document.getElementById(id).addEventListener('input', drawDet);
+});
+drawDet();
+
+// ============================================================
+// SECTION 3: MATRIX MULTIPLICATION
+// ============================================================
+const mmCanvas = document.getElementById('matmul-canvas');
+const mmCtx = mmCanvas.getContext('2d');
+let mmStep = 0; // 0=original, 1=after B, 2=after AB
+let mmAnimId = null;
+let mmAnimT = 1;
+let mmFromM = [1,0,0,1];
+let mmToM = [1,0,0,1];
+
+function getAM() { return getM(['a00','a01','a10','a11']); }
+function getBM() { return getM(['b00','b01','b10','b11']); }
+
+function drawMatMul(currentM, t=1) {
+  resizeCanvas(mmCanvas);
+  const W = mmCanvas.width, H = mmCanvas.height;
+  mmCtx.clearRect(0,0,W,H);
+  mmCtx.fillStyle = '#0d0d18';
+  mmCtx.fillRect(0,0,W,H);
+
+  drawGrid(mmCtx, W, H, [1,0,0,1], 1, 0.12);
+  const toScreen = drawGrid(mmCtx, W, H, currentM, t, 1);
+
+  const mt = lerpM(currentM, t);
+  drawBasisVectors(mmCtx, toScreen, [mt[0], mt[2]], [mt[1], mt[3]]);
+
+  // Step label
+  const labels = ['ORIGINAL', 'AFTER B (shear)', 'AFTER AB (shear + rotate)'];
+  mmCtx.font = "bold 11px 'JetBrains Mono'";
+  mmCtx.fillStyle = 'rgba(0,255,170,0.7)';
+  mmCtx.textAlign = 'left';
+  mmCtx.fillText(labels[mmStep] || '', 16, 28);
+}
+
+function animateMatMul(targetM) {
+  if (mmAnimId) cancelAnimationFrame(mmAnimId);
+  const startM = mmFromM;
+  mmAnimT = 0;
+  const duration = 1000;
+  const start = performance.now();
+
+  function step(now) {
+    const raw = Math.min((now-start)/duration, 1);
+    mmAnimT = easeInOut(raw);
+    // Lerp between grids
+    const curr = [
+      lerp(startM[0],targetM[0],mmAnimT),
+      lerp(startM[1],targetM[1],mmAnimT),
+      lerp(startM[2],targetM[2],mmAnimT),
+      lerp(startM[3],targetM[3],mmAnimT),
+    ];
+    drawMatMul(curr, 1);
+
+    mmCtx.font = "bold 11px 'JetBrains Mono'";
+    mmCtx.fillStyle = 'rgba(0,255,170,0.7)';
+    mmCtx.textAlign = 'left';
+    const labels = ['ORIGINAL', 'AFTER B', 'AFTER AB'];
+    mmCtx.fillText(labels[mmStep] || '', 16, 28);
+
+    if (raw < 1) mmAnimId = requestAnimationFrame(step);
+    else mmFromM = targetM;
+  }
+  requestAnimationFrame(step);
+}
+
+function updateMatMulResult() {
+  const A = getAM(), B = getBM();
+  const AB = matMul(A, B);
+  document.getElementById('matmul-result').innerHTML =
+    `AB = [[${AB[0].toFixed(1)}, ${AB[1].toFixed(1)}],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[${AB[2].toFixed(1)}, ${AB[3].toFixed(1)}]]`;
+}
+
+const mmBtn = document.getElementById('matmul-step-btn');
+mmBtn.addEventListener('click', () => {
+  const B = getBM(), A = getAM();
+  const AB = matMul(A, B);
+
+  if (mmStep === 0) {
+    mmStep = 1;
+    mmFromM = [1,0,0,1];
+    animateMatMul(B);
+    mmBtn.textContent = 'STEP 2: Apply A';
+  } else if (mmStep === 1) {
+    mmStep = 2;
+    mmFromM = B;
+    animateMatMul(AB);
+    mmBtn.textContent = 'RESET';
+  } else {
+    mmStep = 0;
+    mmFromM = AB;
+    animateMatMul([1,0,0,1]);
+    mmBtn.textContent = 'STEP 1: Apply B';
+  }
+  updateMatMulResult();
+});
+
+['a00','a01','a10','a11','b00','b01','b10','b11'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    updateMatMulResult();
+    mmStep = 0;
+    mmFromM = [1,0,0,1];
+    drawMatMul([1,0,0,1], 1);
+    mmBtn.textContent = 'STEP 1: Apply B';
+  });
+});
+
+updateMatMulResult();
+drawMatMul([1,0,0,1]);
+
+// ============================================================
+// SECTION 4: EIGENVECTORS
+// ============================================================
+const eCanvas = document.getElementById('eigen-canvas');
+const eCtx = eCanvas.getContext('2d');
+let eigenAnimating = false;
+let eigenAnimT = 0;
+let eigenAnimId = null;
+
+function computeEigen(m) {
+  // For 2x2: char poly λ² - tr(A)λ + det(A) = 0
+  const tr = m[0]+m[3], d = det(m);
+  const disc = tr*tr - 4*d;
+  if (disc < 0) return null; // complex eigenvalues
+  const l1 = (tr + Math.sqrt(disc)) / 2;
+  const l2 = (tr - Math.sqrt(disc)) / 2;
+
+  function eigVec(lambda) {
+    // (A - λI)v = 0
+    const a = m[0]-lambda, b = m[1];
+    const c = m[2], dd = m[3]-lambda;
+    let vx, vy;
+    if (Math.abs(b) > 0.001) { vx = -b; vy = a; }
+    else if (Math.abs(c) > 0.001) { vx = dd; vy = -c; }
+    else { vx = 1; vy = 0; }
+    const len = Math.sqrt(vx*vx+vy*vy);
+    return [vx/len, vy/len];
+  }
+
+  return { l1, l2, v1: eigVec(l1), v2: eigVec(l2) };
+}
+
+function drawEigen(t = 0) {
+  resizeCanvas(eCanvas);
+  const W = eCanvas.width, H = eCanvas.height;
+  eCtx.clearRect(0,0,W,H);
+  eCtx.fillStyle = '#0d0d18';
+  eCtx.fillRect(0,0,W,H);
+
+  const m = getM(['e00','e01','e10','e11']);
+  const S = Math.min(W,H)/10;
+  const CX = W/2, CY = H/2;
+  const mt = lerpM(m, t);
+
+  function toScreen(x,y) {
+    const [tx,ty] = applyM(mt, x, y);
+    return [CX+tx*S, CY-ty*S];
+  }
+
+  drawGrid(eCtx, W, H, m, t, 0.9);
+
+  const eigen = computeEigen(m);
+
+  // Random vector (gets rotated)
+  const rv = [0.6, 0.8];
+  const rvT = applyM(mt, rv[0], rv[1]);
+  drawArrow(eCtx,
+    [CX, CY],
+    [CX + rvT[0]*S, CY - rvT[1]*S],
+    '#ff6b6b', 2.5, ''
+  );
+
+  // Eigenvectors
+  if (eigen) {
+    [
+      { v: eigen.v1, l: eigen.l1, col: '#00ffaa', name: `λ₁=${eigen.l1.toFixed(2)}` },
+      { v: eigen.v2, l: eigen.l2, col: '#ffd166', name: `λ₂=${eigen.l2.toFixed(2)}` }
+    ].forEach(({ v, l, col, name }) => {
+      const scale = 2.5;
+      const sx = v[0]*scale, sy = v[1]*scale;
+      const tx2 = applyM(mt, sx, sy);
+
+      // Eigen line (stays on line)
+      eCtx.save();
+      eCtx.setLineDash([4,6]);
+      eCtx.beginPath();
+      eCtx.moveTo(CX - v[0]*S*6, CY + v[1]*S*6);
+      eCtx.lineTo(CX + v[0]*S*6, CY - v[1]*S*6);
+      eCtx.strokeStyle = col+'44';
+      eCtx.lineWidth = 1;
+      eCtx.stroke();
+      eCtx.setLineDash([]);
+      eCtx.restore();
+
+      drawArrow(eCtx,
+        [CX, CY],
+        [CX + tx2[0]*S, CY - tx2[1]*S],
+        col, 3, name
+      );
+    });
+
+    // Info
+    eCtx.font = "11px 'JetBrains Mono'";
+    eCtx.fillStyle = 'rgba(255,255,255,0.35)';
+    eCtx.textAlign = 'left';
+    eCtx.fillText(`tr=${(m[0]+m[3]).toFixed(1)}  det=${det(m).toFixed(2)}  λ=${eigen.l1.toFixed(2)}, ${eigen.l2.toFixed(2)}`, 16, H-16);
+  } else {
+    eCtx.font = "11px 'JetBrains Mono'";
+    eCtx.fillStyle = 'rgba(255,107,107,0.7)';
+    eCtx.textAlign = 'left';
+    eCtx.fillText('Complex eigenvalues — no real eigenvectors', 16, H-16);
+  }
+}
+
+document.getElementById('eigen-animate-btn').addEventListener('click', () => {
+  if (eigenAnimId) cancelAnimationFrame(eigenAnimId);
+  eigenAnimT = 0;
+  const duration = 1200;
+  const start = performance.now();
+
+  function step(now) {
+    const raw = Math.min((now-start)/duration, 1);
+    eigenAnimT = easeInOut(raw);
+    drawEigen(eigenAnimT);
+    if (raw < 1) eigenAnimId = requestAnimationFrame(step);
+    else {
+      setTimeout(() => {
+        const back = performance.now();
+        function stepBack(now2) {
+          const raw2 = Math.min((now2-back)/duration, 1);
+          drawEigen(1 - easeInOut(raw2));
+          if (raw2 < 1) eigenAnimId = requestAnimationFrame(stepBack);
+        }
+        eigenAnimId = requestAnimationFrame(stepBack);
+      }, 800);
+    }
+  }
+  eigenAnimId = requestAnimationFrame(step);
+});
+
+function setEigenPreset(a,b,c,d) {
+  document.getElementById('e00').value=a;
+  document.getElementById('e01').value=b;
+  document.getElementById('e10').value=c;
+  document.getElementById('e11').value=d;
+  drawEigen(0);
+}
+
+['e00','e01','e10','e11'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => drawEigen(0));
+});
+
+drawEigen(0);
+
+// ============================================================
+// SECTION 5: INVERSE
+// ============================================================
+const iCanvas = document.getElementById('inverse-canvas');
+const iCtx = iCanvas.getContext('2d');
+let invStep = 0;
+let invFromM = [1,0,0,1];
+let invAnimId = null;
+
+function getInvM() { return getM(['i00','i01','i10','i11']); }
+
+function computeInverse(m) {
+  const d = det(m);
+  if (Math.abs(d) < 0.0001) return null;
+  return [m[3]/d, -m[1]/d, -m[2]/d, m[0]/d];
+}
+
+function updateInvDisplay() {
+  const m = getInvM();
+  const inv = computeInverse(m);
+  const el = document.getElementById('inv-display');
+  if (!inv) {
+    el.innerHTML = '<span style="color:var(--accent2)">NO INVERSE (det=0)</span>';
+  } else {
+    el.innerHTML = `A⁻¹ = [[${inv[0].toFixed(2)}, ${inv[1].toFixed(2)}],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[${inv[2].toFixed(2)}, ${inv[3].toFixed(2)}]]`;
+    el.style.color = 'var(--accent3)';
+  }
+}
+
+function animateInv(targetM) {
+  if (invAnimId) cancelAnimationFrame(invAnimId);
+  const startM = [...invFromM];
+  const duration = 900;
+  const start = performance.now();
+
+  function step(now) {
+    const raw = Math.min((now-start)/duration, 1);
+    const t = easeInOut(raw);
+    const curr = startM.map((v,i) => lerp(v, targetM[i], t));
+    drawInverse(curr);
+    if (raw < 1) invAnimId = requestAnimationFrame(step);
+    else invFromM = targetM;
+  }
+  requestAnimationFrame(step);
+}
+
+function drawInverse(currentM) {
+  resizeCanvas(iCanvas);
+  const W = iCanvas.width, H = iCanvas.height;
+  iCtx.clearRect(0,0,W,H);
+  iCtx.fillStyle = '#0d0d18';
+  iCtx.fillRect(0,0,W,H);
+
+  drawGrid(iCtx, W, H, [1,0,0,1], 1, 0.1);
+  drawGrid(iCtx, W, H, currentM, 1, 1);
+
+  const inv = computeInverse(getInvM());
+  if (invStep === 2 && inv) {
+    drawGrid(iCtx, W, H, inv, 1, 0.18);
+  }
+
+  const S = Math.min(W,H)/10;
+  const CX = W/2, CY = H/2;
+
+  // Labels
+  iCtx.font = "bold 11px 'JetBrains Mono'";
+  iCtx.fillStyle = invStep===0?'rgba(255,255,255,0.4)':invStep===1?'rgba(0,255,170,0.8)':'rgba(107,143,255,0.8)';
+  iCtx.textAlign = 'left';
+  const stepLabels = ['ORIGINAL SPACE', 'AFTER TRANSFORM A', 'AFTER A⁻¹ (back to start!)'];
+  iCtx.fillText(stepLabels[invStep], 16, 28);
+
+  if (invStep === 2 && inv) {
+    iCtx.font = "11px 'JetBrains Mono'";
+    iCtx.fillStyle = 'rgba(255,255,255,0.3)';
+    iCtx.fillText(`A⁻¹ = [[${inv[0].toFixed(2)}, ${inv[1].toFixed(2)}], [${inv[2].toFixed(2)}, ${inv[3].toFixed(2)}]]`, 16, H-20);
+  }
+}
+
+const invBtn = document.getElementById('inv-step-btn');
+invBtn.addEventListener('click', () => {
+  const m = getInvM();
+  const inv = computeInverse(m);
+
+  if (invStep === 0) {
+    invStep = 1;
+    invFromM = [1,0,0,1];
+    animateInv(m);
+    invBtn.textContent = 'STEP 2: Apply A⁻¹';
+  } else if (invStep === 1) {
+    if (!inv) { alert('No inverse exists (det = 0)! Cannot undo this transformation.'); return; }
+    invStep = 2;
+    invFromM = m;
+    animateInv([1,0,0,1]);
+    invBtn.textContent = 'RESET';
+  } else {
+    invStep = 0;
+    invFromM = [1,0,0,1];
+    drawInverse([1,0,0,1]);
+    invBtn.textContent = 'STEP 1: Apply A';
+  }
+});
+
+['i00','i01','i10','i11'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    updateInvDisplay();
+    invStep = 0;
+    invFromM = [1,0,0,1];
+    drawInverse([1,0,0,1]);
+    invBtn.textContent = 'STEP 1: Apply A';
+  });
+});
+
+function setInvPreset(a,b,c,d) {
+  document.getElementById('i00').value=a;
+  document.getElementById('i01').value=b;
+  document.getElementById('i10').value=c;
+  document.getElementById('i11').value=d;
+  updateInvDisplay();
+  invStep=0; invFromM=[1,0,0,1];
+  drawInverse([1,0,0,1]);
+  invBtn.textContent='STEP 1: Apply A';
+}
+
+updateInvDisplay();
+drawInverse([1,0,0,1]);
+
+// ============================================================
+// RESIZE HANDLER
+// ============================================================
+window.addEventListener('resize', () => {
+  drawTransform(getTransformM(), 1);
+  drawDet();
+  drawMatMul(mmFromM, 1);
+  drawEigen(0);
+  drawInverse(invFromM);
+});
+</script>
+</body>
+</html>
