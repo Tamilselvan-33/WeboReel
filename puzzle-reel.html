@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧩 PUZZLE REEL</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Exo+2:wght@900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --neon-yellow: #FFE500;
+    --neon-pink: #FF2D78;
+    --neon-cyan: #00F5FF;
+    --neon-green: #39FF14;
+    --dark: #080810;
+    --panel: #0D0D1A;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--dark);
+    color: #fff;
+    font-family: 'Space Mono', monospace;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    width: 20px; height: 20px;
+    border: 2px solid var(--neon-yellow);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.1s, border-color 0.2s;
+    mix-blend-mode: difference;
+  }
+  .cursor-dot {
+    width: 6px; height: 6px;
+    background: var(--neon-yellow);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+  }
+
+  /* ── HERO ── */
+  #hero {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,229,0,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,229,0,0.07) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: gridMove 8s linear infinite;
+  }
+  @keyframes gridMove {
+    from { transform: translateY(0); }
+    to   { transform: translateY(50px); }
+  }
+
+  .scanline {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(5rem, 15vw, 14rem);
+    letter-spacing: 0.05em;
+    line-height: 0.9;
+    text-align: center;
+    position: relative;
+    z-index: 3;
+    color: var(--neon-yellow);
+    text-shadow:
+      0 0 20px rgba(255,229,0,0.8),
+      0 0 60px rgba(255,229,0,0.4),
+      4px 4px 0 var(--neon-pink),
+      8px 8px 0 rgba(255,45,120,0.4);
+    animation: flicker 4s infinite;
+  }
+  @keyframes flicker {
+    0%,94%,96%,100% { opacity: 1; }
+    95% { opacity: 0.7; }
+  }
+
+  .hero-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(0.7rem, 2vw, 1rem);
+    letter-spacing: 0.4em;
+    color: var(--neon-cyan);
+    margin-top: 1rem;
+    z-index: 3;
+    text-transform: uppercase;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 2rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    color: rgba(255,255,255,0.4);
+    z-index: 3;
+    animation: bounce 2s ease-in-out infinite;
+  }
+  @keyframes bounce {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(8px); }
+  }
+
+  /* floating puzzle pieces */
+  .float-piece {
+    position: absolute;
+    font-size: 3rem;
+    opacity: 0.15;
+    animation: floatPiece linear infinite;
+    z-index: 1;
+  }
+  @keyframes floatPiece {
+    from { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+    10%  { opacity: 0.15; }
+    90%  { opacity: 0.15; }
+    to   { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+  }
+
+  /* ── SECTIONS ── */
+  section {
+    min-height: 100vh;
+    padding: 4rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .section-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.9rem;
+    letter-spacing: 0.5em;
+    color: var(--neon-pink);
+    margin-bottom: 1rem;
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    text-align: center;
+    margin-bottom: 2.5rem;
+    line-height: 1;
+  }
+
+  /* ── RIDDLE CARDS ── */
+  #riddles { background: var(--panel); }
+
+  .riddle-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    max-width: 900px;
+    width: 100%;
+  }
+
+  .riddle-card {
+    border: 2px solid rgba(0,245,255,0.3);
+    border-radius: 4px;
+    padding: 2rem;
+    background: rgba(0,245,255,0.03);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.3s, transform 0.2s;
+  }
+  .riddle-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+    transition: left 0.5s;
+  }
+  .riddle-card:hover { border-color: var(--neon-cyan); transform: translateY(-4px); }
+  .riddle-card:hover::before { left: 100%; }
+
+  .riddle-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    color: rgba(255,229,0,0.2);
+    position: absolute;
+    top: 0.5rem; right: 1rem;
+  }
+
+  .riddle-q {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    color: #ddd;
+  }
+
+  .reveal-btn {
+    background: none;
+    border: 1px solid var(--neon-yellow);
+    color: var(--neon-yellow);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    padding: 0.5rem 1.2rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .reveal-btn:hover { background: var(--neon-yellow); color: #000; }
+
+  .riddle-answer {
+    display: none;
+    margin-top: 1rem;
+    padding: 0.8rem;
+    background: rgba(57,255,20,0.1);
+    border-left: 3px solid var(--neon-green);
+    font-size: 0.85rem;
+    color: var(--neon-green);
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── SLIDER PUZZLE ── */
+  #slider-puzzle { background: var(--dark); }
+
+  .puzzle-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    width: min(90vw, 360px);
+    aspect-ratio: 1;
+    background: var(--neon-pink);
+    border: 3px solid var(--neon-pink);
+    border-radius: 4px;
+    box-shadow: 0 0 40px rgba(255,45,120,0.5);
+  }
+
+  .tile {
+    background: var(--panel);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    color: var(--neon-yellow);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s, transform 0.1s;
+    border-radius: 2px;
+  }
+  .tile:hover:not(.empty) { background: #1a1a2e; transform: scale(0.96); }
+  .tile.empty { background: var(--dark); cursor: default; }
+  .tile.correct { color: var(--neon-green); text-shadow: 0 0 10px var(--neon-green); }
+
+  .puzzle-info {
+    display: flex;
+    gap: 3rem;
+    margin-top: 2rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.5);
+  }
+  .puzzle-info span { color: var(--neon-cyan); font-weight: bold; }
+
+  .action-btn {
+    margin-top: 1.5rem;
+    background: none;
+    border: 2px solid var(--neon-pink);
+    color: var(--neon-pink);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.2em;
+    padding: 0.7rem 2rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+  .action-btn:hover {
+    background: var(--neon-pink);
+    color: #000;
+    box-shadow: 0 0 20px rgba(255,45,120,0.6);
+  }
+
+  /* ── MATH PUZZLE ── */
+  #math-puzzle { background: var(--panel); }
+
+  .math-box {
+    max-width: 600px;
+    width: 100%;
+    border: 2px solid rgba(57,255,20,0.4);
+    border-radius: 4px;
+    padding: 3rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .math-box::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(57,255,20,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .math-question {
+    font-family: 'Exo 2', sans-serif;
+    font-size: clamp(1.5rem, 5vw, 3rem);
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: 2rem;
+    line-height: 1.3;
+  }
+  .math-question em {
+    color: var(--neon-green);
+    font-style: normal;
+    text-shadow: 0 0 15px var(--neon-green);
+  }
+
+  .answer-input {
+    background: rgba(255,255,255,0.05);
+    border: 2px solid rgba(57,255,20,0.4);
+    color: var(--neon-green);
+    font-family: 'Space Mono', monospace;
+    font-size: 1.5rem;
+    padding: 0.6rem 1.2rem;
+    text-align: center;
+    width: 140px;
+    outline: none;
+    border-radius: 2px;
+    transition: border-color 0.2s;
+  }
+  .answer-input:focus { border-color: var(--neon-green); }
+
+  .submit-btn {
+    display: block;
+    margin: 1.5rem auto 0;
+    background: var(--neon-green);
+    border: none;
+    color: #000;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 0.2em;
+    padding: 0.7rem 2.5rem;
+    cursor: pointer;
+    transition: box-shadow 0.2s, transform 0.1s;
+    border-radius: 2px;
+  }
+  .submit-btn:hover { box-shadow: 0 0 25px rgba(57,255,20,0.7); transform: scale(1.04); }
+  .submit-btn:active { transform: scale(0.97); }
+
+  .feedback {
+    margin-top: 1rem;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    min-height: 1.5rem;
+    transition: color 0.3s;
+  }
+
+  .score-bar {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    justify-content: center;
+  }
+  .score-pill {
+    padding: 0.3rem 1rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+  }
+  .score-pill.correct-pill { background: rgba(57,255,20,0.2); color: var(--neon-green); border: 1px solid var(--neon-green); }
+  .score-pill.wrong-pill  { background: rgba(255,45,120,0.2); color: var(--neon-pink);  border: 1px solid var(--neon-pink); }
+
+  /* ── WIN OVERLAY ── */
+  .win-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(8,8,16,0.95);
+    z-index: 1000;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .win-overlay.show { display: flex; animation: fadeIn 0.5s ease; }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  .win-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4rem, 12vw, 10rem);
+    color: var(--neon-yellow);
+    text-shadow: 0 0 40px rgba(255,229,0,0.8), 4px 4px 0 var(--neon-pink);
+    animation: zoomIn 0.6s cubic-bezier(0.175,0.885,0.32,1.275);
+  }
+  @keyframes zoomIn { from { transform: scale(0.3); opacity:0; } to { transform: scale(1); opacity:1; } }
+  .confetti-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .confetti-piece {
+    position: absolute;
+    width: 10px; height: 10px;
+    top: -20px;
+    animation: confettiFall linear forwards;
+    border-radius: 2px;
+  }
+  @keyframes confettiFall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 3rem;
+    text-align: center;
+    border-top: 1px solid rgba(255,229,0,0.1);
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.2);
+  }
+
+  /* progress dots */
+  .progress-dots {
+    position: fixed;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    z-index: 100;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    transition: background 0.3s, transform 0.3s;
+    cursor: pointer;
+  }
+  .dot.active { background: var(--neon-yellow); transform: scale(1.4); }
+
+  /* particle burst */
+  .particle {
+    position: fixed;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    animation: particleFly 0.6s ease-out forwards;
+  }
+  @keyframes particleFly {
+    to { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Custom cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-dot" id="cursorDot"></div>
+
+<!-- Nav dots -->
+<div class="progress-dots">
+  <div class="dot active" onclick="scrollTo(0)"></div>
+  <div class="dot" onclick="document.getElementById('riddles').scrollIntoView({behavior:'smooth'})"></div>
+  <div class="dot" onclick="document.getElementById('slider-puzzle').scrollIntoView({behavior:'smooth'})"></div>
+  <div class="dot" onclick="document.getElementById('math-puzzle').scrollIntoView({behavior:'smooth'})"></div>
+</div>
+
+<!-- ── HERO ── -->
+<section id="hero">
+  <div class="grid-bg"></div>
+  <div class="scanline"></div>
+  <h1 class="hero-title">PUZZLE<br>REEL</h1>
+  <p class="hero-sub">// Challenge Your Mind //</p>
+  <p class="scroll-hint">▼ SCROLL TO PLAY ▼</p>
+</section>
+
+<!-- ── RIDDLES ── -->
+<section id="riddles">
+  <p class="section-label">// MODULE 01</p>
+  <h2 class="section-title" style="color:var(--neon-cyan)">RIDDLE ME THIS</h2>
+  <div class="riddle-grid" id="riddleGrid"></div>
+</section>
+
+<!-- ── SLIDER PUZZLE ── -->
+<section id="slider-puzzle">
+  <p class="section-label">// MODULE 02</p>
+  <h2 class="section-title" style="color:var(--neon-pink)">SLIDE & SOLVE</h2>
+  <p style="color:rgba(255,255,255,0.4);font-size:0.8rem;letter-spacing:0.2em;margin-bottom:1.5rem;">ARRANGE 1–8 IN ORDER</p>
+  <div class="puzzle-board" id="puzzleBoard"></div>
+  <div class="puzzle-info">
+    <div>MOVES: <span id="moveCount">0</span></div>
+    <div>TIME: <span id="timer">00:00</span></div>
+  </div>
+  <button class="action-btn" onclick="shuffleBoard()">⟳ SHUFFLE</button>
+</section>
+
+<!-- ── MATH PUZZLE ── -->
+<section id="math-puzzle">
+  <p class="section-label">// MODULE 03</p>
+  <h2 class="section-title" style="color:var(--neon-green)">MATH BLITZ</h2>
+  <div class="math-box">
+    <div class="math-question" id="mathQ"></div>
+    <input class="answer-input" id="mathInput" type="number" placeholder="?" autocomplete="off">
+    <button class="submit-btn" onclick="checkMath()">SUBMIT</button>
+    <div class="feedback" id="mathFeedback"></div>
+    <div class="score-bar">
+      <div class="score-pill correct-pill">✓ <span id="correctCount">0</span></div>
+      <div class="score-pill wrong-pill">✗ <span id="wrongCount">0</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- Win overlay -->
+<div class="win-overlay" id="winOverlay">
+  <div class="confetti-container" id="confettiContainer"></div>
+  <div class="win-title">🏆 SOLVED!</div>
+  <p style="color:var(--neon-cyan);letter-spacing:0.3em;margin-top:1rem;font-size:0.9rem;">PUZZLE MASTER UNLOCKED</p>
+  <button class="action-btn" style="margin-top:2rem;" onclick="document.getElementById('winOverlay').classList.remove('show')">KEEP PLAYING</button>
+</div>
+
+<footer>© PUZZLE REEL — TRAIN YOUR BRAIN — HAVE FUN</footer>
+
+<script>
+// ── Audio Engine ──
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let ctx;
+function ensureCtx() { if (!ctx) ctx = new AudioCtx(); return ctx; }
+
+function playTone(freq, type='sine', dur=0.15, vol=0.3) {
+  try {
+    const c = ensureCtx();
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    osc.connect(gain); gain.connect(c.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, c.currentTime);
+    gain.gain.setValueAtTime(vol, c.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
+    osc.start(); osc.stop(c.currentTime + dur);
+  } catch(e) {}
+}
+
+function playClick() { playTone(300, 'square', 0.08, 0.2); }
+function playSuccess() {
+  [523,659,784,1047].forEach((f,i) => setTimeout(()=>playTone(f,'sine',0.2,0.4), i*80));
+}
+function playWrong() {
+  playTone(150,'sawtooth',0.3,0.4);
+  setTimeout(()=>playTone(120,'sawtooth',0.3,0.3),100);
+}
+function playWin() {
+  [523,659,784,1047,1319,1568].forEach((f,i) => setTimeout(()=>playTone(f,'sine',0.4,0.5), i*100));
+}
+function playSlide() { playTone(500,'sine',0.07,0.15); }
+
+// ── Vibration ──
+function vibrate(pattern) {
+  if (navigator.vibrate) navigator.vibrate(pattern);
+}
+
+// ── Cursor ──
+const cursor = document.getElementById('cursor');
+const cursorDot = document.getElementById('cursorDot');
+let mx=0,my=0,cx=0,cy=0;
+document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; cursorDot.style.left=mx+'px'; cursorDot.style.top=my+'px'; });
+(function animCursor(){
+  cx+=(mx-cx)*0.15; cy+=(my-cy)*0.15;
+  cursor.style.left=(cx-10)+'px'; cursor.style.top=(cy-10)+'px';
+  requestAnimationFrame(animCursor);
+})();
+
+// ── Floating pieces ──
+const pieces = ['🧩','⬛','🔷','▲','◆'];
+for(let i=0;i<12;i++){
+  const el = document.createElement('div');
+  el.className='float-piece';
+  el.textContent = pieces[Math.floor(Math.random()*pieces.length)];
+  el.style.left = Math.random()*100+'vw';
+  el.style.animationDuration = (8+Math.random()*12)+'s';
+  el.style.animationDelay = (-Math.random()*20)+'s';
+  el.style.fontSize = (1.5+Math.random()*3)+'rem';
+  document.getElementById('hero').appendChild(el);
+}
+
+// ── Particles ──
+function burst(x, y, color) {
+  for(let i=0;i<10;i++){
+    const p = document.createElement('div');
+    p.className='particle';
+    p.style.left=x+'px'; p.style.top=y+'px';
+    p.style.background=color;
+    const angle=Math.random()*Math.PI*2;
+    const dist=40+Math.random()*60;
+    p.style.setProperty('--tx', Math.cos(angle)*dist+'px');
+    p.style.setProperty('--ty', Math.sin(angle)*dist+'px');
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),700);
+  }
+}
+
+// ── RIDDLES ──
+const riddles = [
+  { q: "I speak without a mouth and hear without ears. I have no body, but I come alive with the wind. What am I?", a: "An Echo" },
+  { q: "The more you take, the more you leave behind. What am I?", a: "Footsteps" },
+  { q: "I have cities, but no houses live there. I have mountains, but no trees grow there. I have water, but no fish swim there. What am I?", a: "A Map" },
+  { q: "What comes once in a minute, twice in a moment, but never in a thousand years?", a: "The letter M" },
+  { q: "I'm light as a feather, yet the strongest person can't hold me for more than 5 minutes. What am I?", a: "Breath" },
+  { q: "The more you look at me the less you see. What am I?", a: "Darkness" },
+];
+
+const grid = document.getElementById('riddleGrid');
+riddles.forEach((r,i) => {
+  const card = document.createElement('div');
+  card.className = 'riddle-card';
+  card.innerHTML = `
+    <div class="riddle-number">${String(i+1).padStart(2,'0')}</div>
+    <p class="riddle-q">${r.q}</p>
+    <button class="reveal-btn" onclick="revealAnswer(this, event)">REVEAL ANSWER</button>
+    <div class="riddle-answer">💡 ${r.a}</div>
+  `;
+  grid.appendChild(card);
+});
+
+function revealAnswer(btn, e) {
+  ensureCtx();
+  playSuccess();
+  vibrate([30,20,30]);
+  burst(e.clientX, e.clientY, '#FFE500');
+  const ans = btn.nextElementSibling;
+  if(ans.style.display==='block') { ans.style.display='none'; btn.textContent='REVEAL ANSWER'; }
+  else { ans.style.display='block'; btn.textContent='HIDE ANSWER'; }
+}
+
+// ── SLIDER PUZZLE ──
+let tiles = [1,2,3,4,5,6,7,8,0];
+let moves = 0;
+let timerInterval, startTime, timerRunning=false;
+
+function renderBoard() {
+  const board = document.getElementById('puzzleBoard');
+  board.innerHTML='';
+  tiles.forEach((t,i)=>{
+    const div = document.createElement('div');
+    div.className = 'tile' + (t===0?' empty':'') + (t!==0&&t===i+1?' correct':'');
+    div.textContent = t===0?'':t;
+    if(t!==0) div.onclick = ()=>moveTile(i);
+    board.appendChild(div);
+  });
+}
+
+function moveTile(idx) {
+  const empty = tiles.indexOf(0);
+  const r1=Math.floor(idx/3), c1=idx%3, r2=Math.floor(empty/3), c2=empty%3;
+  if(Math.abs(r1-r2)+Math.abs(c1-c2)!==1) return;
+  ensureCtx();
+  playSlide();
+  vibrate(10);
+  [tiles[idx],tiles[empty]]=[tiles[empty],tiles[idx]];
+  moves++;
+  document.getElementById('moveCount').textContent=moves;
+  if(!timerRunning){ startTime=Date.now(); timerRunning=true; timerInterval=setInterval(updateTimer,1000); }
+  renderBoard();
+  if(isSolved()){ clearInterval(timerInterval); timerRunning=false; setTimeout(showWin,300); }
+}
+
+function isSolved(){ return tiles.every((t,i)=> i===8?t===0:t===i+1); }
+
+function updateTimer(){
+  const s=Math.floor((Date.now()-startTime)/1000);
+  document.getElementById('timer').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+}
+
+function shuffleBoard(){
+  ensureCtx();
+  playClick();
+  vibrate([20,10,20,10,20]);
+  do { for(let i=tiles.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[tiles[i],tiles[j]]=[tiles[j],tiles[i]];} } while(isSolved()||!isSolvable());
+  moves=0; document.getElementById('moveCount').textContent=0;
+  document.getElementById('timer').textContent='00:00';
+  clearInterval(timerInterval); timerRunning=false;
+  renderBoard();
+}
+
+function isSolvable(){
+  let inv=0;
+  const flat=tiles.filter(x=>x!==0);
+  for(let i=0;i<flat.length;i++) for(let j=i+1;j<flat.length;j++) if(flat[i]>flat[j]) inv++;
+  const emptyRow=3-Math.floor(tiles.indexOf(0)/3);
+  return (emptyRow%2===0)?inv%2!==0:inv%2===0;
+}
+
+renderBoard();
+
+// ── MATH PUZZLE ──
+let mathAnswer, correctCount=0, wrongCount=0;
+const ops=['+','-','×'];
+
+function newMath(){
+  const op=ops[Math.floor(Math.random()*ops.length)];
+  let a,b;
+  if(op==='+'){a=Math.floor(Math.random()*50)+10;b=Math.floor(Math.random()*50)+10;mathAnswer=a+b;}
+  else if(op==='-'){a=Math.floor(Math.random()*50)+30;b=Math.floor(Math.random()*30)+5;mathAnswer=a-b;}
+  else{a=Math.floor(Math.random()*12)+2;b=Math.floor(Math.random()*12)+2;mathAnswer=a*b;}
+  document.getElementById('mathQ').innerHTML=`What is <em>${a} ${op} ${b}</em> ?`;
+  document.getElementById('mathInput').value='';
+  document.getElementById('mathFeedback').textContent='';
+  document.getElementById('mathInput').focus();
+}
+
+function checkMath(){
+  ensureCtx();
+  const val=parseInt(document.getElementById('mathInput').value);
+  const fb=document.getElementById('mathFeedback');
+  if(isNaN(val)) return;
+  if(val===mathAnswer){
+    playSuccess(); vibrate([40,20,40,20,80]);
+    fb.style.color='var(--neon-green)'; fb.textContent='✓ CORRECT!';
+    correctCount++; document.getElementById('correctCount').textContent=correctCount;
+    burst(window.innerWidth/2, window.innerHeight/2, '#39FF14');
+    setTimeout(newMath,900);
+  } else {
+    playWrong(); vibrate([100,30,100]);
+    fb.style.color='var(--neon-pink)'; fb.textContent=`✗ WRONG — Answer was ${mathAnswer}`;
+    wrongCount++; document.getElementById('wrongCount').textContent=wrongCount;
+    document.getElementById('mathInput').style.borderColor='var(--neon-pink)';
+    setTimeout(()=>{ document.getElementById('mathInput').style.borderColor=''; newMath(); },1200);
+  }
+}
+
+document.getElementById('mathInput').addEventListener('keydown', e=>{ if(e.key==='Enter') checkMath(); });
+newMath();
+
+// ── Win overlay ──
+function showWin(){
+  playWin(); vibrate([50,30,50,30,200]);
+  spawnConfetti();
+  document.getElementById('winOverlay').classList.add('show');
+}
+
+function spawnConfetti(){
+  const colors=['#FFE500','#FF2D78','#00F5FF','#39FF14','#fff'];
+  const c=document.getElementById('confettiContainer');
+  c.innerHTML='';
+  for(let i=0;i<80;i++){
+    const p=document.createElement('div');
+    p.className='confetti-piece';
+    p.style.left=Math.random()*100+'vw';
+    p.style.background=colors[Math.floor(Math.random()*colors.length)];
+    p.style.animationDuration=(1.5+Math.random()*2.5)+'s';
+    p.style.animationDelay=(Math.random()*1.5)+'s';
+    p.style.transform=`rotate(${Math.random()*360}deg)`;
+    p.style.width=p.style.height=(6+Math.random()*10)+'px';
+    c.appendChild(p);
+  }
+}
+
+// ── Progress dots ──
+const sections=['hero','riddles','slider-puzzle','math-puzzle'];
+const dots=document.querySelectorAll('.dot');
+window.addEventListener('scroll',()=>{
+  const sy=window.scrollY+window.innerHeight/2;
+  sections.forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    if(sy>=el.offsetTop && sy<el.offsetTop+el.offsetHeight) dots.forEach((d,j)=>d.classList.toggle('active',i===j));
+  });
+});
+
+// ── Init audio on first interaction ──
+document.addEventListener('click', ()=>ensureCtx(), {once:true});
+document.addEventListener('touchstart', ()=>ensureCtx(), {once:true});
+</script>
+</body>
+</html>
